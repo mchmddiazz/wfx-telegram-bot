@@ -37,9 +37,9 @@ A comprehensive Python toolkit for managing multiple Telethon `.session` files. 
 ### 1. Clone & Install Dependencies
 
 ```bash
-git clone <your-repository-url>
-cd <your-repository-folder>
-pip install telethon aiogram python-dotenv
+git clone https://github.com/mchmddiazz/wfx-telegram-bot
+cd wfx-telegram-bot
+pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment Variables
