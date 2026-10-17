@@ -112,3 +112,16 @@ Open your Telegram bot and type `/start`. You can:
 *.session
 backup/
 ```
+
+---
+
+## ⚠️ Disclaimer
+
+> This project is for **educational purposes only**, not for malicious use or unauthorized trading. 
+> 
+> *This is for educational purpose only, not for using.* 
+> *If you want to use for buy and sell sessions, please contact https://t.me/flowyourc0de*
+> 
+> **免责声明：**
+> *本工具仅供教育学习目的，不得用于非法用途。*
+> *如果您想将此工具用于买卖会话（Session），请联系：https://t.me/flowyourc0de*
