@@ -119,7 +119,5 @@ backup/
 
 > This project is for **educational purposes only**, not for malicious use or unauthorized trading. 
 >  
-> *If you want to use for buy and sell sessions, please contact https://t.me/flowyourc0de*
-> 
-> **免责声明：**
-> *如果您想将此工具用于买卖会话（Session），请联系：https://t.me/flowyourc0de*
+>
+> *如果您想将此工具用于买卖会话（Session+tdata/json），请联系：https://t.me/flowyourc0de*
