@@ -1,5 +1,2 @@
 # Mengabaikan file environment
 .env
-
-# Atau jika Anda menggunakan banyak file .env (seperti .env.local, .env.development, dll)
-.env*
