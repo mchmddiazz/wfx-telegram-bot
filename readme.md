@@ -6,7 +6,7 @@ A comprehensive Python toolkit for managing multiple Telethon `.session` files. 
 
 ## 📋 Features
 
-- **Session Health Check**: Scan and classify session statuses (`AKTIF`, `BANNED`, `FROZEN`, `DEACTIVATED`, or `FLOODWAIT`).
+- **Session Health Check**: Scan and classify session statuses (`ACTIVE`, `BANNED`, `FROZEN`, `DEACTIVATED`, or `FLOODWAIT`).
 - **OTP Reader**:
   - **History Mode**: Search recent messages across all chats for 4-6 digit OTP codes.
   - **Live Listener**: Real-time event listener waiting for incoming OTP messages.
@@ -65,13 +65,13 @@ python session_manager.py
 ```
 
 **Available CLI Menu Commands:**
-1. **Lihat daftar session**: Lists all session files (including subfolders).
-2. **Cek semua session**: Recursively inspects and checks all session statuses.
-3. **Cek satu session**: Deep check for a single specified session.
-4. **Tambah session baru**: Log in a new account and create a `.session` file.
-5. **Buat ZIP semua session**: Backup session files into a timestamped `.zip` archive.
-6. **Baca OTP session**: Choose between checking message history or waiting live for an incoming OTP.
-7. **Rename & Sortir Region**: Sorts all sessions into country code folders based on phone numbers.
+1. **See all sessions**: Lists all session files (including subfolders).
+2. **Check all sessions**: Recursively inspects and checks all session statuses.
+3. **Check one session**: Deep check for a single specified session.
+4. **Add new session**: Log in a new account and create a `.session` file.
+5. **Create ZIP all sessions**: Backup session files into a timestamped `.zip` archive.
+6. **Read sessions OTP**: Choose between checking message history or waiting live for an incoming OTP.
+7. **Rename & Sort Region**: Sorts all sessions into country code folders based on phone numbers.
 
 **CLI Flags:**
 
