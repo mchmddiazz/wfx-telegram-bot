@@ -832,24 +832,6 @@ async def cmd_admin(message: types.Message, state: FSMContext):
         "👑 **WFX Admin Dashboard**\n\n"
         "Selamat datang kembali, Admin! Di sini Anda memiliki akses penuh untuk mengelola sistem dan whitelist pengguna.\n\n"
         "Silakan pilih menu di bawah ini:"
-    )# ---------------------------------------------------------------- COMMAND ADMIN & START
-
-@dp.message(Command("admin"))
-async def cmd_admin(message: types.Message, state: FSMContext):
-    user_id = message.from_user.id
-    
-    # Validasi apakah user yang mengetik adalah Admin utama
-    if user_id != ADMIN_ID:
-        await message.answer("⛔ **Akses Ditolak!** Perintah ini khusus untuk Admin.")
-        return
-
-    await state.clear()
-    
-    # Tampilan Dashboard khusus Admin
-    admin_dashboard_text = (
-        "👑 **WFX Admin Dashboard**\n\n"
-        "Selamat datang kembali, Admin! Di sini Anda memiliki akses penuh untuk mengelola sistem dan whitelist pengguna.\n\n"
-        "Silakan pilih menu di bawah ini:"
     )
     
     kb = [
