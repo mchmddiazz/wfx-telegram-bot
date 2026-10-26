@@ -2,6 +2,8 @@
 
 A comprehensive Python toolkit for managing multiple Telethon `.session` files. It features automated session health checks, interactive management, real-time OTP retrieval, country code auto-sorting, and a full Telegram Bot control panel supporting a user whitelist system, per-user custom API configurations, and dynamic `.env` management.
 
+![Alt Text](https://prod-tamdev.vercel.app/assets/wfx-tele-Dlk_aRT6.webp)
+
 ---
 
 ## 📋 Features
