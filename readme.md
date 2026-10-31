@@ -4,7 +4,7 @@ A comprehensive Python toolkit for managing multiple Telethon `.session` files. 
 
 [English](#english) | [中文 (Chinese)](#中文-chinese)
 
-![Alt Text](https://prod-tamdev.vercel.app/assets/wfx-tele-Dlk_aRT6.webp)
+![Alt Text](https://www.tamdev.biz.id/assets/wfx-tele-update-D5-HdbRQ.webp)
 
 ---
 
@@ -98,7 +98,7 @@ The following utility tools have UI buttons integrated into the control panel wi
 ### 1. Clone & Install Dependencies
 
 ```bash
-git clone [https://github.com/mchmddiazz/wfx-telegram-bot](https://github.com/mchmddiazz/wfx-telegram-bot)
+git clone https://github.com/mchmddiazz/wfx-telegram-bot
 cd wfx-telegram-bot
 pip install -r requirements.txt
 ```
@@ -138,7 +138,7 @@ whitelist.json
 
 一个全面的 Python 工具包，用于管理多个 Telethon `.session` 文件。它具有自动会话健康检查、实时验证码 (OTP) 获取、区号自动分类，以及一个功能完整的 Telegram 机器人控制面板，支持白名单系统、用户自定义 API 配置以及动态 `.env` 管理。
 
-![Alt Text](https://prod-tamdev.vercel.app/assets/wfx-tele-Dlk_aRT6.webp)
+![Alt Text](https://www.tamdev.biz.id/assets/wfx-tele-update-D5-HdbRQ.webp)
 
 ---
 
@@ -229,7 +229,7 @@ whitelist.json
 ### 1. 克隆并安装依赖
 
 ```bash
-git clone [https://github.com/mchmddiazz/wfx-telegram-bot](https://github.com/mchmddiazz/wfx-telegram-bot)
+git clone https://github.com/mchmddiazz/wfx-telegram-bot
 cd wfx-telegram-bot
 pip install -r requirements.txt
 ```
