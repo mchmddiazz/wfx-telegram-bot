@@ -9,6 +9,7 @@ A comprehensive Python toolkit for managing multiple Telethon `.session` files. 
 ---
 
 <a name="english"></a>
+
 ## 🇬🇧 English Documentation
 
 ## 📋 Features
@@ -178,6 +179,7 @@ whitelist.json
 ---
 
 <a name="chinese"></a>
+
 ## 🇨🇳 中文文档
 
 # 🚀 Telegram 会话管理器与机器人控制面板 (Telegram Session Manager & Bot Control Panel)
