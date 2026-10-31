@@ -4,6 +4,8 @@ A comprehensive Python toolkit for managing multiple Telethon `.session` files. 
 
 [English](#english) | [中文 (Chinese)](#中文-chinese)
 
+![Alt Text](https://prod-tamdev.vercel.app/assets/wfx-tele-Dlk_aRT6.webp)
+
 ---
 
 <a name="english"></a>
@@ -181,6 +183,8 @@ whitelist.json
 # 🚀 Telegram 会话管理器与机器人控制面板 (Telegram Session Manager & Bot Control Panel)
 
 一个全面的 Python 工具包，用于管理多个 Telethon `.session` 文件。它具有自动会话健康检查、实时验证码 (OTP) 获取、区号自动分类，以及一个功能完整的 Telegram 机器人控制面板，支持白名单系统、用户自定义 API 配置以及动态 `.env` 管理。
+
+![Alt Text](https://prod-tamdev.vercel.app/assets/wfx-tele-Dlk_aRT6.webp)
 
 ---
 
