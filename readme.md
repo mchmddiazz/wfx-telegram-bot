@@ -14,7 +14,7 @@ A comprehensive Python toolkit for managing multiple Telethon `.session` files. 
 
 ## 📋 Features
 
-- **Session Health Check**: Scan and classify session statuses (`ACTIVE`, `BANNED`, `FROZEN`, `DEACTIVATED`, or `FLOODWAIT`).
+- **Session Health Check**: Scan and classify session statuses (`NEW REGISTER`, `FREE SPAM`, `FROZEN`, `LIMIT`, or `INVALID`).
 - **OTP Reader**:
   - **History Mode**: Search recent messages across all chats for 4-6 digit OTP codes.
   - **Live Listener**: Real-time event listener waiting for incoming OTP messages.
@@ -116,54 +116,6 @@ ADMIN_ID=your_telegram_user_id
 
 ---
 
-## 🚀 Usage
-
-### Option 1: Interactive CLI (`session_manager.py`)
-
-Run the script to launch the interactive menu:
-
-```bash
-python session_manager.py
-```
-
-**Available CLI Menu Commands:**
-1. **See all sessions**: Lists all session files (including subfolders).
-2. **Check all sessions**: Recursively inspects and checks all session statuses.
-3. **Check one session**: Deep check for a single specified session.
-4. **Add new session**: Log in a new account and create a `.session` file.
-5. **Create ZIP all sessions**: Backup session files into a timestamped `.zip` archive.
-6. **Read sessions OTP**: Choose between checking message history or waiting live for an incoming OTP.
-7. **Rename & Sort Region**: Sorts all sessions into country code folders based on phone numbers.
-
-**CLI Flags:**
-
-```bash
-python session_manager.py --list                 # List all session files
-python session_manager.py --check                # Check status of all sessions
-python session_manager.py --otp session_name     # Read OTP for a session
-python session_manager.py --rename-all           # Sort sessions by country code
-python session_manager.py --zip                  # Backup sessions to zip
-```
-
----
-
-### Option 2: Telegram Bot Control Panel (`bot_manager.py`)
-
-Start the bot service:
-
-```bash
-python bot_manager.py
-```
-
-Open your Telegram bot and type `/start`. You can:
-- View all active sessions.
-- Run health checks on all sessions.
-- Extract OTPs directly from chat dialogs.
-- Organize sessions into region subfolders.
-- Access **⚙️ Settings** to update your API ID, API Hash, or Bot Token on the fly.
-
----
-
 ## 🔒 Security Note
 
 - **Never commit `.env`, `whitelist.json` or `.session` files to Git!**
@@ -192,7 +144,7 @@ whitelist.json
 
 ## 📋 主要功能 (Features)
 
-- **会话健康检查 (Session Health Check)**：扫描并分类会话状态（`ACTIVE`、`BANNED`、`FROZEN`、`DEACTIVATED` 或 `FLOODWAIT`）[cite: 2]。
+- **会话健康检查 (Session Health Check)**：扫描并分类会话状态（(`NEW REGISTER`, `FREE SPAM`, `FROZEN`, `LIMIT`, or `INVALID`)
 - **验证码读取器 (OTP Reader)**：
   - **历史模式 (History Mode)**：在所有聊天记录中搜索最近的 4-6 位数 OTP 验证码[cite: 2]。
   - **实时监听 (Live Listener)**：实时监听并等待传入的 OTP 消息[cite: 2]。
@@ -292,23 +244,6 @@ TG_API_ID=12345678
 TG_API_HASH=your_api_hash_here
 ADMIN_ID=your_telegram_user_id
 ```
-
----
-
-## 🚀 机器人使用方法 (Usage)
-
-### 启动机器人服务
-
-Start the bot service:
-
-```bash
-python bot_manager.py
-```
-
-打开您的 Telegram 机器人并发送以下指令:
-- `/start` ：为普通用户/成员显示默认的交互式主菜单。
-- `/admin` ：打开专用的管理员仪表板（仅限 `ADMIN_ID`），用于管理白名单权限和全局设置。
-- 在机器人内部访问 ⚙️ Settings 菜单，配置您个人的 API ID 和 API Hash
 
 ---
 
