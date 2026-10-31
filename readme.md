@@ -2,7 +2,12 @@
 
 A comprehensive Python toolkit for managing multiple Telethon `.session` files. It features automated session health checks, interactive management, real-time OTP retrieval, country code auto-sorting, and a full Telegram Bot control panel supporting a user whitelist system, per-user custom API configurations, and dynamic `.env` management.
 
+[English](#english) | [中文 (Chinese)](#中文-chinese)
+
 ---
+
+<a name="english"></a>
+## 🇬🇧 English Documentation
 
 ## 📋 Features
 
@@ -16,6 +21,58 @@ A comprehensive Python toolkit for managing multiple Telethon `.session` files. 
   - **Settings Menu** to update `BOT_TOKEN`, `TG_API_ID`, and `TG_API_HASH` directly inside Telegram.
   - **Whitelist System & Admin Dashboard**: Strict access control via the `/admin` command for administrators and per-user custom API setups.
 - **Backup Utility**: Compress all session files into `.zip` archives (supporting `.session`, `.json`, and `TData` structures).
+
+---
+
+### ✨ Newly Added Features
+
+1. **Automated Health Checking via Official `@SpamBot`**
+   - Interacts with `@SpamBot` (`/start`) to accurately determine the limitation status of each session.
+   - Intelligent response classification:
+     - **`free_spam`**: Balances containing `"good news"` or `"no limits"`.
+     - **`new_register`**: Balances containing `"unfortunately"`.
+     - **`spam_limit`**: Balances containing `"limited"`.
+     - **`frozen`**: Accounts receiving explicit block notices or raising `UserDeactivatedBanError`.
+     - **`invalid`**: Broken, unreadable, or unhandled session errors.
+
+2. **Automated Folder Classification & Region Sorting**
+   - Dynamically sorts session files into structured subdirectories:
+     `SESSION_DIR / <country_code> / <status_folder>`
+   - Supported status folders: `new_register`, `free_spam`, `spam_limit`, `frozen`, and `invalid`.
+   - Backward compatibility for legacy folder names (e.g., migrating `active` to `free_spam`).
+
+3. **In-Menu Category Export System**
+   - Direct export functionality integrated into sub-menus based on country and status.
+   - **Supported Export Formats:**
+     - `.session` (Standard Telethon/Pyrogram session file)
+     - `.tdata` (Telegram Desktop data structure)
+     - `.json` (Structured metadata representation)
+   - **Export Quantity Modes:**
+     - **Export All Files**: Downloads all session files in the selected category.
+     - **Custom Quantity**: Interactive FSM prompt allowing users to specify exact file counts.
+
+4. **Multi-User Access & Security**
+   - Access restricted via `whitelist.json` with user role management.
+   - Individual API ID and API Hash settings per user.
+
+---
+
+### 🚧 Features Under Development
+
+The following utility tools have UI buttons integrated into the control panel with placeholder feedback while their core logic is being built:
+
+- 🟢 **Check Live** – Real-time session active status check.
+- 🆔 **Check ID** – User ID & Telegram account identity inspector.
+- 📧 **Change Mail** – Automated 2FA/login email modification.
+- 💚 **Check Health** – Comprehensive account integrity report.
+- 🚫 **Check Spam** – Standalone spam status checker.
+- 🔓 **Remove 2FA** – Remove Two-Step Verification passwords.
+- 🔄 **Change 2FA** – Update current Two-Step Verification password.
+- 🔐 **Enable 2FA** – Set up new Two-Step Verification password.
+- 🧹 **Clean Profile** – Reset bio, profile photos, and names.
+- 💬 **Clean Message** – Delete history and dialogs across accounts.
+- ✂️ **Split Files** – Batch split session folders into smaller batches.
+- 🔗 **Merge Files** – Combine multiple session directory outputs.
 
 ---
 
@@ -118,18 +175,12 @@ whitelist.json
 
 ---
 
-## ⚠️ Disclaimer
-
-> This project is for **educational purposes only**, not for malicious use or unauthorized trading. 
->  
->
-> *如果您想将此工具用于买卖会话（Session+tdata/json），请联系：https://t.me/flowyourc0de*
-
-
+<a name="chinese"></a>
+## 🇨🇳 中文文档
 
 # 🚀 Telegram 会话管理器与机器人控制面板 (Telegram Session Manager & Bot Control Panel)
 
-一个全面的 Python 工具包，用于管理多个 Telethon `.session` 文件。它具有自动会话健康检查、实时验证码 (OTP) 获取、区号自动分类，以及一个功能完整的 Telegram 机器人控制面板，支持白名单系统、用户自定义 API 配置以及动态 `.env` 管理[cite: 2]。
+一个全面的 Python 工具包，用于管理多个 Telethon `.session` 文件。它具有自动会话健康检查、实时验证码 (OTP) 获取、区号自动分类，以及一个功能完整的 Telegram 机器人控制面板，支持白名单系统、用户自定义 API 配置以及动态 `.env` 管理。
 
 ---
 
@@ -145,6 +196,58 @@ whitelist.json
   - **设置菜单 (Settings Menu)**：直接在 Telegram 内部更新 `BOT_TOKEN`、`TG_API_ID` 和 `TG_API_HASH`[cite: 2]。
   - **白名单与管理员面板 (Whitelist & Admin Dashboard)**：通过 `/admin` 命令进行严格的管理员访问控制及用户专属 API 配置。
 - **备份工具 (Backup Utility)**：将所有会话文件压缩成 `.zip` 归档（支持 `.session`、`.json` 和 `TData` 结构）[cite: 2]。
+
+---
+
+### ✨ 最新新增功能
+
+1. **基于官方 `@SpamBot` 的自动化账号状态检测**
+   - 自动向 `@SpamBot` 发送 `/start` 并分析回复内容，精准判定账号受限状态。
+   - 智能响应分类标准：
+     - **`free_spam` (无限制/自由)**：包含 `"good news"` 或 `"no limits"` 的回复。
+     - **`new_register` (新注册/受限)**：包含 `"unfortunately"` 的回复。
+     - **`spam_limit` (垃圾邮件限制)**：包含 `"limited"` 的回复。
+     - **`frozen` (冻结/封禁)**：包含明确封禁提示或触发 `UserDeactivatedBanError` 异常的账号。
+     - **`invalid` (无效/损坏)**：损坏或无法读取的 Session 文件。
+
+2. **自动化目录分类与国家/地区归类**
+   - 动态将 Session 文件整理至结构化子目录中：
+     `SESSION_DIR / <国家代码> / <状态文件夹>`
+   - 支持的状态文件夹：`new_register`、`free_spam`、`spam_limit`、`frozen` 和 `invalid`。
+   - 兼容旧版本目录（自动将旧版 `active` 目录迁移至 `free_spam`）。
+
+3. **子菜单分类导出系统**
+   - 将导出功能直接集成至国家和状态子菜单中。
+   - **支持的导出格式：**
+     - `.session`（标准 Telethon / Pyrogram 文件）
+     - `.tdata`（Telegram Desktop 客户端数据格式）
+     - `.json`（结构化元数据文件）
+   - **导出数量模式：**
+     - **导出全部文件 (Export All)**：一键打包下载该分类下的所有 Session。
+     - **自定义数量 (Custom Amount)**：通过交互式 FSM 提示输入的具体文件数量。
+
+4. **多用户访问控制与安全**
+   - 通过 `whitelist.json` 实施白名单访问限制及角色管理。
+   - 支持每个用户独立配置个人的 API ID 和 API Hash。
+
+---
+
+### 🚧 开发中的功能 (Under Development)
+
+以下实用工具按钮已整合至主菜单中，并配置了占位提示，具体核心逻辑正在开发中：
+
+- 🟢 **Check Live (在线检测)** – 实时检测账号 Session 是否有效。
+- 🆔 **Check ID (ID 查询)** – 查询账号 User ID 及 Telegram 身份信息。
+- 📧 **Change Mail (换绑邮箱)** – 自动化修改登录/2FA 关联邮箱。
+- 💚 **Check Health (健康检查)** – 生成综合账号健康度报告。
+- 🚫 **Check Spam (Spam 检测)** – 独立 Spam 状态检测。
+- 🔓 **Remove 2FA (解绑 2FA)** – 移除两步验证密码。
+- 🔄 **Change 2FA (修改 2FA)** – 更新现有的两步验证密码。
+- 🔐 **Enable 2FA (开启 2FA)** – 设置新的两步验证密码。
+- 🧹 **Clean Profile (清理资料)** – 重置个人简介、头像及昵称。
+- 💬 **Clean Message (清理消息)** – 清理账号聊天记录与对话。
+- ✂️ **Split Files (拆分文件)** – 将 Session 批量拆分至不同文件夹。
+- 🔗 **Merge Files (合并文件)** – 合并多个 Session 目录。
 
 ---
 
@@ -216,10 +319,3 @@ whitelist.json
 ```
 
 ---
-
-## ⚠️ 免责声明 (Disclaimer)
-
-> 本项目仅供教育目的使用，不得用于恶意用途或未经授权的交易 
->  
->
-> *如果您想将此工具用于买卖会话（Session+tdata/json），请联系：https://t.me/flowyourc0de*

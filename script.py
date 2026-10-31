@@ -36,13 +36,229 @@ if ENV_PATH.exists():
     load_dotenv(ENV_PATH)
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))  # Masukkan Telegram User ID Admin utama di .env
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher(storage=MemoryStorage())
 
 
+# Mapping nama negara & bendera lengkap seluruh dunia
+COUNTRY_NAMES = {
+    "1": "🇺🇸/🇨🇦 US/Canada",
+    "7": "🇷🇺 Russia/Kazakhstan",
+    "20": "🇪🇬 Egypt",
+    "27": "🇿🇦 South Africa",
+    "30": "🇬🇷 Greece",
+    "31": "🇳🇱 Netherlands",
+    "32": "🇧🇪 Belgium",
+    "33": "🇫🇷 France",
+    "34": "🇪🇸 Spain",
+    "36": "🇭🇺 Hungary",
+    "39": "🇮🇹 Italy",
+    "40": "🇦🇹 Austria",
+    "41": "🇨🇭 Switzerland",
+    "43": "🇦🇺 Australia",
+    "44": "🇬🇧 United Kingdom",
+    "45": "🇩🇰 Denmark",
+    "46": "🇸🇪 Sweden",
+    "47": "🇳🇴 Norway",
+    "48": "🇵🇱 Poland",
+    "49": "🇩🇪 Germany",
+    "51": "🇵🇪 Peru",
+    "52": "🇲🇽 Mexico",
+    "53": "🇨🇺 Cuba",
+    "54": "🇦🇷 Argentina",
+    "55": "🇧🇷 Brazil",
+    "56": "🇨🇱 Chile",
+    "57": "🇨🇴 Colombia",
+    "58": "🇻🇪 Venezuela",
+    "60": "🇲🇾 Malaysia",
+    "61": "🇦🇺 Australia",
+    "62": "🇮🇩 Indonesia",
+    "63": "🇵🇭 Philippines",
+    "64": "🇳🇿 New Zealand",
+    "65": "🇸🇬 Singapore",
+    "66": "🇹🇭 Thailand",
+    "81": "🇯🇵 Japan",
+    "82": "🇰🇷 South Korea",
+    "84": "🇻🇳 Vietnam",
+    "86": "🇨🇳 China",
+    "90": "🇹🇷 Turkey",
+    "91": "🇮🇳 India",
+    "92": "🇵🇰 Pakistan",
+    "93": "🇦🇫 Afghanistan",
+    "94": "🇱🇰 Sri Lanka",
+    "95": "🇲🇲 Myanmar",
+    "98": "🇮🇷 Iran",
+    "211": "🇸🇸 South Sudan",
+    "212": "🇲🇦 Morocco",
+    "213": "🇩🇿 Algeria",
+    "216": "🇹🇳 Tunisia",
+    "218": "🇱🇾 Libya",
+    "220": "🇬🇲 Gambia",
+    "221": "🇸🇳 Senegal",
+    "222": "🇲🇷 Mauritania",
+    "223": "🇲🇱 Mali",
+    "224": "🇬🇳 Guinea",
+    "225": "🇨🇮 Ivory Coast",
+    "226": "🇧🇫 Burkina Faso",
+    "227": "🇳🇪 Niger",
+    "228": "🇹🇬 Togo",
+    "229": "🇧🇯 Benin",
+    "230": "🇲🇺 Mauritius",
+    "231": "🇱🇷 Liberia",
+    "232": "🇸🇱 Sierra Leone",
+    "233": "🇬🇭 Ghana",
+    "234": "🇳🇬 Nigeria",
+    "235": "🇹🇩 Chad",
+    "236": "🇨🇫 Central African Republic",
+    "237": "🇨🇲 Cameroon",
+    "238": "🇨🇻 Cape Verde",
+    "239": "🇸🇹 Sao Tome and Principe",
+    "240": "🇬🇶 Equatorial Guinea",
+    "241": "🇬🇦 Gabon",
+    "242": "🇨🇬 Republic of the Congo",
+    "243": "🇨🇩 DR Congo",
+    "244": "🇦🇴 Angola",
+    "245": "🇬🇼 Guinea-Bissau",
+    "246": "🇩🇮 Diego Garcia",
+    "248": "🇸🇨 Seychelles",
+    "249": "🇸🇩 Sudan",
+    "250": "🇷🇼 Rwanda",
+    "251": "🇪🇹 Ethiopia",
+    "252": "🇸🇴 Somalia",
+    "253": "🇩🇯 Djibouti",
+    "254": "🇰🇪 Kenya",
+    "255": "🇹🇿 Tanzania",
+    "256": "🇺🇬 Uganda",
+    "257": "🇧🇮 Burundi",
+    "258": "🇲🇿 Mozambique",
+    "260": "🇿🇲 Zambia",
+    "261": "🇲🇬 Madagascar",
+    "262": "🇷🇪 Réunion",
+    "263": "🇿🇼 Zimbabwe",
+    "264": "🇳🇦 Namibia",
+    "265": "🇲🇼 Malawi",
+    "266": "🇱🇸 Lesotho",
+    "267": "🇧🇼 Botswana",
+    "268": "🇸🇿 Eswatini",
+    "269": "🇰🇲 Comoros",
+    "290": "🇸🇭 Saint Helena",
+    "291": "🇪🇷 Eritrea",
+    "297": "🇦🇼 Aruba",
+    "298": "🇫🇴 Faroe Islands",
+    "299": "🇬🇱 Greenland",
+    "350": "🇬🇮 Gibraltar",
+    "351": "🇵🇹 Portugal",
+    "352": "🇱🇺 Luxembourg",
+    "353": "🇮🇪 Ireland",
+    "354": "🇮🇸 Iceland",
+    "355": "🇦🇱 Albania",
+    "356": "🇲🇹 Malta",
+    "357": "🇨🇾 Cyprus",
+    "358": "🇫🇮 Finland",
+    "359": "🇧🇬 Bulgaria",
+    "364": "🇭🇺 Hungary",
+    "370": "🇱🇹 Lithuania",
+    "371": "🇱🇻 Latvia",
+    "372": "🇪🇪 Estonia",
+    "373": "🇲🇩 Moldova",
+    "374": "🇦🇲 Armenia",
+    "375": "🇧🇾 Belarus",
+    "376": "🇦🇩 Andorra",
+    "377": "🇲🇨 Monaco",
+    "378": "🇸🇲 San Marino",
+    "379": "🇻🇦 Vatican City",
+    "380": "🇺🇦 Ukraine",
+    "381": "🇷🇸 Serbia",
+    "382": "🇲🇪 Montenegro",
+    "383": "🇽🇰 Kosovo",
+    "385": "🇭🇷 Croatia",
+    "386": "🇸🇮 Slovenia",
+    "387": "🇧🇦 Bosnia and Herzegovina",
+    "389": "🇲🇰 North Macedonia",
+    "420": "🇨🇿 Czech Republic",
+    "421": "🇸🇰 Slovakia",
+    "423": "🇱🇮 Liechtenstein",
+    "500": "🇫🇰 Falkland Islands",
+    "501": "🇧🇿 Belize",
+    "502": "🇬🇹 Guatemala",
+    "503": "🇸🇻 El Salvador",
+    "504": "🇭🇳 Honduras",
+    "505": "🇳🇮 Nicaragua",
+    "506": "🇨🇷 Costa Rica",
+    "507": "🇵🇦 Panama",
+    "508": "🇵🇲 Saint Pierre and Miquelon",
+    "509": "🇭🇹 Haiti",
+    "590": "🇬🇵 Guadeloupe",
+    "591": "🇧🇴 Bolivia",
+    "592": "🇬🇾 Guyana",
+    "593": "🇪🇨 Ecuador",
+    "594": "🇬🇫 French Guiana",
+    "595": "🇵🇾 Paraguay",
+    "596": "🇲🇶 Martinique",
+    "597": "🇸🇷 Suriname",
+    "598": "🇺🇾 Uruguay",
+    "599": "🇨🇼 Curaçao",
+    "670": "🇹🇱 Timor-Leste",
+    "672": "🇳🇫 Norfolk Island",
+    "673": "🇧🇳 Brunei",
+    "674": "🇳🇷 Nauru",
+    "675": "🇵🇬 Papua New Guinea",
+    "676": "🇹🇴 Tonga",
+    "677": "🇸🇧 Solomon Islands",
+    "678": "🇻🇺 Vanuatu",
+    "679": "🇫🇯 Fiji",
+    "680": "🇵🇼 Palau",
+    "681": "🇼🇫 Wallis and Futuna",
+    "682": "🇨🇰 Cook Islands",
+    "683": "🇳🇺 Niue",
+    "685": "🇼🇸 Samoa",
+    "686": "🇰🇮 Kiribati",
+    "687": "🇳🇨 New Caledonia",
+    "688": "🇹🇻 Tuvalu",
+    "689": "🇵🇫 French Polynesia",
+    "690": "🇹🇰 Tokelau",
+    "691": "🇫🇲 Micronesia",
+    "692": "🇲🇭 Marshall Islands",
+    "850": "🇰🇵 North Korea",
+    "852": "🇭🇰 Hong Kong",
+    "853": "🇲🇴 Macau",
+    "855": "🇰🇭 Cambodia",
+    "856": "🇱🇦 Laos",
+    "880": "🇧🇩 Bangladesh",
+    "886": "🇹🇼 Taiwan",
+    "960": "🇲🇻 Maldives",
+    "961": "🇱🇧 Lebanon",
+    "962": "🇯🇴 Jordan",
+    "963": "🇸🇾 Syria",
+    "964": "🇮🇶 Iraq",
+    "965": "🇰🇼 Kuwait",
+    "966": "🇸🇦 Saudi Arabia",
+    "967": "🇾🇪 Yemen",
+    "968": "🇴🇲 Oman",
+    "970": "🇵🇸 Palestine",
+    "971": "🇦🇪 United Arab Emirates",
+    "972": "🇮🇱 Israel",
+    "973": "🇧🇭 Bahrain",
+    "974": "🇶🇦 Qatar",
+    "975": "🇧🇹 Bhutan",
+    "976": "🇲🇳 Mongolia",
+    "977": "🇳🇵 Nepal",
+    "992": "🇹🇯 Tajikistan",
+    "993": "🇹🇲 Turkmenistan",
+    "994": "🇦🇿 Azerbaijan",
+    "995": "🇬🇪 Georgia",
+    "996": "🇰🇬 Kyrgyzstan",
+    "998": "🇺🇿 Uzbekistan",
+    "OTHER": "🌐 Lainnya"
+}
+
 # ---------------------------------------------------------------- FSM STATES GROUP
+class ExportStates(StatesGroup):
+    waiting_for_custom_amount = State()
+
+
 class SettingsStates(StatesGroup):
     waiting_for_bot_token = State()
     waiting_for_api_id = State()
@@ -63,12 +279,8 @@ class AdminUserStates(StatesGroup):
     waiting_for_remove_id = State()
 
 
-# ---------------------------------------------------------------- GET API CREDENTIALS (PER USER)
+# ---------------------------------------------------------------- GET API CREDENTIALS
 def get_user_api_credentials(user_id: int):
-    """
-    Mengambil API ID & API Hash milik user tertentu.
-    Jika tidak diset, akan fallback ke kredensial default dari .env
-    """
     default_api_id = os.getenv("TG_API_ID")
     default_api_hash = os.getenv("TG_API_HASH")
 
@@ -96,7 +308,6 @@ def get_user_api_credentials(user_id: int):
 
 # ---------------------------------------------------------------- UTILS WHITELIST
 def load_allowed_users() -> list:
-    """Memuat daftar User ID Telegram yang diizinkan."""
     users = []
     if ADMIN_ID != 0:
         users.append(ADMIN_ID)
@@ -116,7 +327,6 @@ def load_allowed_users() -> list:
 
 
 def save_allowed_users(users: list):
-    """Menyimpan daftar User ID ke file whitelist.json dengan mempertahankan struktur dict."""
     whitelist_data = {"allowed_users": {}}
     if WHITELIST_PATH.exists():
         try:
@@ -176,7 +386,7 @@ async def auth_middleware(handler, event, data):
     return await handler(event, data)
 
 
-# ---------------------------------------------------------------- UTILS SESSION
+# ---------------------------------------------------------------- UTILS SESSION & KEYBOARD
 def list_sessions():
     SESSION_DIR.mkdir(parents=True, exist_ok=True)
     return sorted(SESSION_DIR.rglob("*.session"))
@@ -204,13 +414,45 @@ def get_main_keyboard(user_id: int):
             types.InlineKeyboardButton(text="🔍 Cek Semua Session", callback_data="menu_check_all"),
         ],
         [
-            types.InlineKeyboardButton(text="🔑 Baca OTP", callback_data="menu_otp"),
             types.InlineKeyboardButton(text="📂 Sortir Region & Status", callback_data="menu_rename"),
+            types.InlineKeyboardButton(text="🔑 Baca OTP", callback_data="menu_otp"),
         ],
         [
-            types.InlineKeyboardButton(text="📤 Export Data", callback_data="menu_export"),
-            types.InlineKeyboardButton(text="⚙️ Settings API", callback_data="menu_settings"),
+            types.InlineKeyboardButton(text="⚙️ Settings", callback_data="menu_settings"),
         ],
+        [
+            types.InlineKeyboardButton(text="⚠️ Under Development", callback_data="under_development"),
+        ],
+        # Baris 1: Check Live & Daftar Session
+        [
+            types.InlineKeyboardButton(text="✅ Check Live", callback_data="menu_check_live"),
+            types.InlineKeyboardButton(text="📁 File Manager", callback_data="menu_file_manager"),
+        ],
+        # Baris 2: Check ID & Change Mail
+        [
+            types.InlineKeyboardButton(text="🆔 Check ID", callback_data="menu_check_id"),
+            types.InlineKeyboardButton(text="📧 Change Mail", callback_data="menu_change_mail"),
+        ],
+        # Baris 3: Check Health & Check Spam
+        [
+            types.InlineKeyboardButton(text="💚 Check Health", callback_data="menu_check_health"),
+            types.InlineKeyboardButton(text="🚫 Check Spam", callback_data="menu_check_spam"),
+        ],
+        # Baris 4: Remove 2FA & Change 2FA
+        [
+            types.InlineKeyboardButton(text="🔓 Remove 2FA", callback_data="menu_remove_2fa"),
+            types.InlineKeyboardButton(text="🔄 Change 2FA", callback_data="menu_change_2fa"),
+        ],
+        # Baris 5: Enable 2FA
+        [
+            types.InlineKeyboardButton(text="🔐 Enable 2FA", callback_data="menu_enable_2fa"),
+        ],
+        # Baris 6: Clean Profile & Clean Message
+        [
+            types.InlineKeyboardButton(text="🧹 Clean Profile", callback_data="menu_clean_profile"),
+            types.InlineKeyboardButton(text="💬 Clean Message", callback_data="menu_clean_message"),
+        ],
+        # Baris 7: Fitur Utama Anda (Sortir Region & Settings API)
     ]
     
     if user_id == ADMIN_ID:
@@ -218,11 +460,59 @@ def get_main_keyboard(user_id: int):
 
     return types.InlineKeyboardMarkup(inline_keyboard=kb)
 
+# ---------------------------------------------------------------- PLACEHOLDER HANDLER MENU BARU
+@dp.callback_query(F.data.startswith("menu_"))
+async def cb_feature_placeholders(callback: types.CallbackQuery):
+    # Biarkan menu yang sudah ada tetap berjalan tanpa tertimpa
+    handled_callbacks = [
+        "menu_list", "menu_check_all", "menu_otp", "menu_rename", 
+        "menu_settings", "menu_back", "menu_user_settings", "menu_admin_users"
+    ]
+    if callback.data in handled_callbacks:
+        return
+
+    menu_title = callback.data.replace("menu_", "").replace("_", " ").title()
+    await callback.answer(f"⚠️ Fitur {menu_title} dalam tahap pengembangan.", show_alert=True)
+
 
 def back_keyboard(user_id: int):
     return types.InlineKeyboardMarkup(
         inline_keyboard=[[types.InlineKeyboardButton(text="« Kembali ke Menu Utama", callback_data="menu_back")]]
     )
+
+
+# ---------------------------------------------------------------- HELPER SPAMBOT CHECK
+async def check_spambot_status(client: TelegramClient) -> str:
+    """
+    Mengirimkan pesan /start ke @SpamBot dan menganalisis kriteria alasannya.
+    """
+    try:
+        await client.send_message("SpamBot", "/start")
+        await asyncio.sleep(2.5)
+
+        messages = await client.get_messages("SpamBot", limit=1)
+        if not messages or not messages[0].text:
+            return "invalid"
+
+        reply_text = messages[0].text.lower()
+
+        if "your account was blocked for violations of the telegram terms of service based on user reports confirmed by our moderators" in reply_text:
+            return "frozen"
+        elif "good news" in reply_text or "no limits" in reply_text:
+            return "free_spam"
+        elif "unfortunately" in reply_text:
+            return "new_register"
+        elif "limited" in reply_text:
+            return "spam_limit"
+        else:
+            return "free_spam"
+
+    except UserDeactivatedBanError:
+        return "frozen"
+    except FloodWaitError:
+        return "spam_limit"
+    except Exception:
+        return "invalid"
 
 
 # ---------------------------------------------------------------- HANDLER COMMAND & START
@@ -236,13 +526,564 @@ async def cmd_start(message: types.Message, state: FSMContext):
     )
 
 
+@dp.message(Command("admin"))
+async def cmd_admin(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    if user_id != ADMIN_ID:
+        await message.answer("⛔ **Akses Ditolak!** Perintah ini khusus untuk Admin.")
+        return
+
+    await state.clear()
+    admin_dashboard_text = (
+        "👑 **WFX Admin Dashboard**\n\n"
+        "Selamat datang kembali, Admin! Di sini Anda memiliki akses penuh untuk mengelola sistem dan whitelist pengguna.\n\n"
+        "Silakan pilih menu di bawah ini:"
+    )
+    
+    kb = [
+        [types.InlineKeyboardButton(text="👥 Kelola Akses User (Whitelist)", callback_data="menu_admin_users")],
+        [types.InlineKeyboardButton(text="⚙️ Pengaturan Global (.env)", callback_data="menu_settings")],
+        [types.InlineKeyboardButton(text="📁 Daftar Session", callback_data="menu_list")],
+        [types.InlineKeyboardButton(text="« Menu Utama", callback_data="menu_back")]
+    ]
+    
+    await message.answer(
+        admin_dashboard_text,
+        reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb),
+        parse_mode="Markdown"
+    )
+
+
 @dp.callback_query(F.data == "menu_back")
 async def cb_back(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text("👋 **WFX Session Control Panel**\nPilih menu manajemen akun:", reply_markup=get_main_keyboard(callback.from_user.id), parse_mode="Markdown")
 
 
-# ---------------------------------------------------------------- USER SETTINGS (CUSTOM API ID & HASH)
+# ---------------------------------------------------------------- MENU UTAMA FILE MANAGER (DAFTAR SESSION)
+@dp.callback_query(F.data == "menu_list")
+async def cb_list_sessions(callback: types.CallbackQuery):
+    files = list_sessions()
+    if not files:
+        await callback.message.edit_text("❌ Belum ada file session di direktori.", reply_markup=back_keyboard(callback.from_user.id))
+        return
+
+    country_counts = {}
+    total_accounts = 0
+
+    for f in files:
+        if "exports" in f.parts:
+            continue
+        rel_path = f.relative_to(SESSION_DIR)
+        parts = rel_path.parts
+        
+        if len(parts) >= 2:
+            country_code = parts[0]
+        else:
+            country_code = "OTHER"
+
+        country_counts[country_code] = country_counts.get(country_code, 0) + 1
+        total_accounts += 1
+
+    text = f"📂 **File Manager**\n\n"
+    text += f"📊 **Accounts : {total_accounts}**"
+
+    kb = []
+    for c_code, count in country_counts.items():
+        c_name = COUNTRY_NAMES.get(c_code, f"🏳️ {c_code}")
+        kb.append([types.InlineKeyboardButton(text=f"{c_name} - {count}", callback_data=f"select_country_{c_code}")])
+
+    kb.append([
+        types.InlineKeyboardButton(text="« Back", callback_data="menu_back"),
+        types.InlineKeyboardButton(text="🏠 Home", callback_data="menu_back")
+    ])
+
+    await callback.message.edit_text(text, reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- SUBMENU NEGARA
+@dp.callback_query(F.data.startswith("select_country_"))
+async def cb_select_country(callback: types.CallbackQuery):
+    country_code = callback.data.replace("select_country_", "")
+    files = list_sessions()
+
+    stats = {
+        "new_register": 0,
+        "free_spam": 0,
+        "spam_limit": 0,
+        "frozen": 0,
+        "invalid": 0
+    }
+
+    for f in files:
+        if "exports" in f.parts:
+            continue
+        rel_path = f.relative_to(SESSION_DIR)
+        parts = rel_path.parts
+        
+        c_code = parts[0] if len(parts) >= 2 else "OTHER"
+        status = parts[1] if len(parts) >= 3 else "new_register"
+
+        if c_code == country_code:
+            if status in ["active"]:
+                status = "free_spam"
+            elif status in ["limit"]:
+                status = "spam_limit"
+
+            if status in stats:
+                stats[status] += 1
+            else:
+                stats["invalid"] += 1
+
+    c_name = COUNTRY_NAMES.get(country_code, country_code)
+    
+    text = f"📂 **File Manager**\n\n"
+    text += f"{c_name}\n\n"
+    text += f"🟢 New Register : {stats['new_register']}\n"
+    text += f"🟡 Free Spam    : {stats['free_spam']}\n"
+    text += f"🔵 Spam Limit   : {stats['spam_limit']}\n"
+    text += f"🔴 Frozen       : {stats['frozen']}\n"
+    text += f"⚪ Invalid      : {stats['invalid']}\n"
+
+    kb = [
+        [types.InlineKeyboardButton(text=f"🟢 New Register - {stats['new_register']}", callback_data=f"show_sess_{country_code}_new_register")],
+        [types.InlineKeyboardButton(text=f"🟡 Free Spam - {stats['free_spam']}", callback_data=f"show_sess_{country_code}_free_spam")],
+        [types.InlineKeyboardButton(text=f"🔵 Spam Limit - {stats['spam_limit']}", callback_data=f"show_sess_{country_code}_spam_limit")],
+        [types.InlineKeyboardButton(text=f"🔴 Frozen - {stats['frozen']}", callback_data=f"show_sess_{country_code}_frozen")],
+        [types.InlineKeyboardButton(text=f"⚪ Invalid - {stats['invalid']}", callback_data=f"show_sess_{country_code}_invalid")],
+        [
+            types.InlineKeyboardButton(text="« Back", callback_data="menu_list"),
+            types.InlineKeyboardButton(text="🏠 Home", callback_data="menu_back")
+        ]
+    ]
+
+    await callback.message.edit_text(text, reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- SUBMENU KATEGORI & OPSI EXPORT
+@dp.callback_query(F.data.startswith("show_sess_"))
+async def cb_show_specific_sessions(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    parts = callback.data.split("_", 3)
+    if len(parts) < 4:
+        await callback.answer("Callback data tidak valid.", show_alert=True)
+        return
+        
+    c_code = parts[2]
+    status = parts[3]
+    
+    target_dir = SESSION_DIR / c_code / status
+    if target_dir.exists():
+        files = sorted(list(target_dir.glob("*.session")))
+    else:
+        files = [
+            f for f in list_sessions() 
+            if len(f.relative_to(SESSION_DIR).parts) >= 3
+            and f.relative_to(SESSION_DIR).parts[0] == c_code 
+            and f.relative_to(SESSION_DIR).parts[1] == status
+        ]
+
+    if not files:
+        await callback.answer("Tidak ada session dalam kategori ini.", show_alert=True)
+        return
+
+    c_name = COUNTRY_NAMES.get(c_code, c_code)
+    
+    text = (
+        f"📱 **Daftar Session ({c_name} - {status.replace('_', ' ').upper()}):**\n\n"
+        f"📦 **Total Terdeteksi:** `{len(files)}` file session\n\n"
+        f"Silakan pilih format export di bawah ini:"
+    )
+    
+    kb = [
+        [types.InlineKeyboardButton(text="📦 Export Session (.session)", callback_data=f"expfmt_session_{c_code}_{status}")],
+        [types.InlineKeyboardButton(text="📁 Export TData (Folder)", callback_data=f"expfmt_tdata_{c_code}_{status}")],
+        [types.InlineKeyboardButton(text="📄 Export JSON (.json)", callback_data=f"expfmt_json_{c_code}_{status}")],
+        [types.InlineKeyboardButton(text="« Kembali", callback_data=f"select_country_{c_code}")]
+    ]
+    await callback.message.edit_text(text, reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
+
+
+@dp.callback_query(F.data.startswith("expfmt_"))
+async def cb_choose_export_amount(callback: types.CallbackQuery):
+    parts = callback.data.split("_", 3)
+    exp_fmt = parts[1]
+    c_code = parts[2]
+    status = parts[3]
+    
+    kb = [
+        [types.InlineKeyboardButton(text="📦 Export Semua File", callback_data=f"doexp_{exp_fmt}_{c_code}_{status}")],
+        [types.InlineKeyboardButton(text="✏️ Input Jumlah (Custom)", callback_data=f"askcount_{exp_fmt}_{c_code}_{status}")],
+        [types.InlineKeyboardButton(text="« Kembali", callback_data=f"show_sess_{c_code}_{status}")]
+    ]
+    
+    await callback.message.edit_text(
+        f"📤 **Metode Export ({exp_fmt.upper()})**\n\nPilih opsi pengunduhan file:",
+        reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb),
+        parse_mode="Markdown"
+    )
+
+
+@dp.callback_query(F.data.startswith("askcount_"))
+async def cb_ask_export_count(callback: types.CallbackQuery, state: FSMContext):
+    parts = callback.data.split("_", 3)
+    exp_fmt = parts[1]
+    c_code = parts[2]
+    status = parts[3]
+    
+    await state.set_state(ExportStates.waiting_for_custom_amount)
+    await state.update_data(exp_fmt=exp_fmt, c_code=c_code, status=status)
+    
+    await callback.message.edit_text(
+        f"✏️ **Input Jumlah Session**\n\nKirimkan angka/jumlah file session yang ingin diexport format **{exp_fmt.upper()}**:\n\n*(Ketik /cancel untuk membatalkan)*",
+        parse_mode="Markdown"
+    )
+
+
+@dp.message(ExportStates.waiting_for_custom_amount)
+async def process_custom_export_amount(message: types.Message, state: FSMContext):
+    if message.text == "/cancel":
+        await state.clear()
+        await message.answer("Dibatalkan.", reply_markup=get_main_keyboard(message.from_user.id))
+        return
+
+    amount_str = message.text.strip()
+    if not amount_str.isdigit() or int(amount_str) <= 0:
+        await message.answer("❌ Harap masukkan angka yang valid!")
+        return
+
+    data = await state.get_data()
+    await state.clear()
+    
+    exp_fmt = data.get("exp_fmt")
+    c_code = data.get("c_code")
+    status = data.get("status")
+    count = int(amount_str)
+
+    await message.answer(f"⏳ Memproses export **{count}** file ke format **{exp_fmt.upper()}**...")
+    zip_path = await generate_category_export(c_code, status, exp_fmt, count)
+    
+    if not zip_path or not zip_path.exists():
+        await message.answer("❌ Gagal membuat zip atau file tidak ditemukan.", reply_markup=get_main_keyboard(message.from_user.id))
+        return
+
+    doc = FSInputFile(str(zip_path), filename=zip_path.name)
+    await message.answer_document(doc, caption=f"✅ **Export Berhasil!**\nFormat: `{exp_fmt.upper()}` | Jumlah: `{count}` file", parse_mode="Markdown")
+
+
+@dp.callback_query(F.data.startswith("doexp_"))
+async def cb_do_export_all(callback: types.CallbackQuery):
+    parts = callback.data.split("_", 3)
+    if len(parts) < 4:
+        await callback.answer("Callback data tidak valid.", show_alert=True)
+        return
+
+    exp_fmt = parts[1]
+    c_code = parts[2]
+    status = parts[3]
+    
+    await callback.message.edit_text(f"⏳ Sedang memproses **semua file** ke format **{exp_fmt.upper()}**...")
+    zip_path = await generate_category_export(c_code, status, exp_fmt, count=None)
+    
+    if not zip_path or not zip_path.exists():
+        await callback.message.edit_text("❌ Gagal membuat file export. Tidak ada file session yang ditemukan.", reply_markup=back_keyboard(callback.from_user.id))
+        return
+
+    doc = FSInputFile(str(zip_path), filename=zip_path.name)
+    await callback.message.answer_document(doc, caption=f"✅ **Export Berhasil!**\nFormat: `{exp_fmt.upper()}` | Opsi: Semua file", parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- FUNCTION GENERATOR EXPORT ZIP
+async def generate_category_export(c_code: str, status: str, exp_type: str, count: int = None) -> Path:
+    export_dir = SESSION_DIR / "exports"
+    export_dir.mkdir(parents=True, exist_ok=True)
+    
+    target_dir = SESSION_DIR / c_code / status
+    
+    if target_dir.exists():
+        files = sorted(list(target_dir.glob("*.session")))
+    else:
+        files = [
+            f for f in list_sessions() 
+            if len(f.relative_to(SESSION_DIR).parts) >= 3
+            and f.relative_to(SESSION_DIR).parts[0] == c_code 
+            and f.relative_to(SESSION_DIR).parts[1] == status
+        ]
+
+    if not files:
+        return None
+
+    if count is not None and count > 0:
+        files = files[:count]
+
+    zip_path = export_dir / f"export_{c_code}_{status}_{exp_type}.zip"
+
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for f in files:
+            rel_path = f.name
+            
+            if exp_type == "session":
+                zipf.write(f, arcname=rel_path)
+            elif exp_type == "json":
+                meta_data = {
+                    "session_name": f.stem,
+                    "phone": f.stem,
+                    "country_code": c_code,
+                    "status": status,
+                }
+                json_bytes = json.dumps(meta_data, indent=4).encode("utf-8")
+                zipf.writestr(f"{f.stem}.json", json_bytes)
+            elif exp_type == "tdata":
+                tdata_inner = f"tdata_{f.stem}/tdata/{f.stem}.session"
+                zipf.write(f, arcname=tdata_inner)
+
+    return zip_path
+
+
+# ---------------------------------------------------------------- CEK SEMUA SESSION (VIA SPAMBOT)
+@dp.callback_query(F.data == "menu_check_all")
+async def cb_check_all(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    api_id, api_hash = get_user_api_credentials(user_id)
+
+    if not api_id or not api_hash:
+        await callback.message.edit_text("❌ TG_API_ID / TG_API_HASH belum diset. Silakan isi di menu Settings terlebih dahulu.", reply_markup=back_keyboard(user_id))
+        return
+
+    files = [f for f in list_sessions() if "exports" not in f.parts]
+    if not files:
+        await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(user_id))
+        return
+
+    await callback.message.edit_text(f"⏳ Sedang memeriksa {len(files)} akun via @SpamBot, mohon tunggu...")
+
+    report = "📊 **Ringkasan Kesehatan Akun (via @SpamBot):**\n\n"
+    stats_count = {
+        "free_spam": 0,
+        "new_register": 0,
+        "spam_limit": 0,
+        "frozen": 0,
+        "invalid": 0
+    }
+
+    for f in files:
+        rel_name = str(f.relative_to(SESSION_DIR).with_suffix(""))
+        path = session_path(rel_name)
+        client = TelegramClient(path, int(api_id), api_hash)
+        
+        status_category = "invalid"
+        try:
+            await client.connect()
+            status_category = await check_spambot_status(client)
+        except UserDeactivatedBanError:
+            status_category = "frozen"
+        except Exception:
+            status_category = "invalid"
+        finally:
+            try:
+                await client.disconnect()
+            except Exception:
+                pass
+
+        stats_count[status_category] += 1
+
+        status_display = {
+            "free_spam": "🟡 FREE SPAM",
+            "new_register": "🟢 NEW REGISTER",
+            "spam_limit": "🔵 SPAM LIMIT",
+            "frozen": "🔴 FROZEN / BANNED",
+            "invalid": "⚪ INVALID / ERROR"
+        }.get(status_category, "⚪ INVALID")
+
+        report += f"• `{rel_name}` : **{status_display}**\n"
+
+    report += (
+        f"\nTotal: {len(files)} | "
+        f"🟢 New Reg: {stats_count['new_register']} | "
+        f"🟡 Free Spam: {stats_count['free_spam']} | "
+        f"🔵 Limit: {stats_count['spam_limit']} | "
+        f"🔴 Frozen: {stats_count['frozen']} | "
+        f"⚪ Invalid: {stats_count['invalid']}"
+    )
+    await callback.message.edit_text(report, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- BACA OTP
+@dp.callback_query(F.data == "menu_otp")
+async def cb_menu_otp(callback: types.CallbackQuery):
+    files = [f for f in list_sessions() if "exports" not in f.parts]
+    if not files:
+        await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(callback.from_user.id))
+        return
+
+    kb = []
+    for f in files:
+        rel_name = str(f.relative_to(SESSION_DIR).with_suffix(""))
+        kb.append([types.InlineKeyboardButton(text=f"📱 {rel_name}", callback_data=f"otp_sel_{rel_name}")])
+
+    kb.append([types.InlineKeyboardButton(text="« Kembali", callback_data="menu_back")])
+    await callback.message.edit_text("Pilih akun session yang ingin dicek OTP-nya:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb))
+
+
+@dp.callback_query(F.data.startswith("otp_sel_"))
+async def cb_otp_selected(callback: types.CallbackQuery, state: FSMContext):
+    session_name = callback.data.replace("otp_sel_", "")
+    await state.update_data(target_session=session_name)
+
+    kb = [
+        [types.InlineKeyboardButton(text="📜 Cek Riwayat Terakhir (15 pesan)", callback_data="otp_mode_history")],
+        [types.InlineKeyboardButton(text="« Kembali", callback_data="menu_otp")],
+    ]
+    await callback.message.edit_text(f"Session dipilih: `{session_name}`\nPilih mode baca OTP:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
+
+
+@dp.callback_query(F.data == "otp_mode_history")
+async def cb_otp_history(callback: types.CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    api_id, api_hash = get_user_api_credentials(user_id)
+
+    if not api_id or not api_hash:
+        await callback.message.edit_text("❌ TG_API_ID / TG_API_HASH belum diset.", reply_markup=back_keyboard(user_id))
+        return
+
+    data = await state.get_data()
+    session_name = data.get("target_session")
+    path = session_path(session_name)
+
+    await callback.message.edit_text(f"⏳ Mengambil riwayat pesan untuk `{session_name}`...", parse_mode="Markdown")
+
+    client = TelegramClient(path, int(api_id), api_hash)
+    otp_pattern = r"\b\d{4,6}\b"
+    result_text = f"🔑 **Hasil OTP untuk `{session_name}`:**\n\n"
+
+    try:
+        await client.connect()
+        messages = await client.get_messages(None, limit=15)
+        found = False
+        for msg in messages:
+            if not msg.text:
+                continue
+            match = re.search(otp_pattern, msg.text)
+            if match:
+                found = True
+                code = match.group(0)
+                try:
+                    sender = await msg.get_sender()
+                    s_name = getattr(sender, "title", None) or getattr(sender, "first_name", "Unknown")
+                except Exception:
+                    s_name = "Unknown"
+
+                result_text += f"• **Waktu**: {msg.date.astimezone():%H:%M:%S}\n"
+                result_text += f"  **Pengirim**: {s_name}\n"
+                result_text += f"  **Kode OTP**: `{code}`\n"
+                result_text += f"  -------------------\n"
+
+        if not found:
+            result_text += "Tidak ditemukan kode OTP dalam 15 pesan terakhir."
+    except Exception as e:
+        result_text += f"❌ Error: {type(e).__name__}"
+    finally:
+        await client.disconnect()
+
+    await callback.message.edit_text(result_text, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- SORTIR REGION & STATUS KESEHATAN (VIA SPAMBOT)
+@dp.callback_query(F.data == "menu_rename")
+async def cb_rename_sessions(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    api_id, api_hash = get_user_api_credentials(user_id)
+
+    if not api_id or not api_hash:
+        await callback.message.edit_text("❌ TG_API_ID / TG_API_HASH belum diset.", reply_markup=back_keyboard(user_id))
+        return
+
+    files = list(SESSION_DIR.rglob("*.session"))
+    if not files:
+        await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(user_id))
+        return
+
+    await callback.message.edit_text("⏳ Sedang memeriksa akun via @SpamBot, menyortir kode negara, dan mengelompokkan...")
+
+    country_prefixes = sorted(list(COUNTRY_NAMES.keys()), key=len, reverse=True)
+    stats = {
+        "new_register": 0,
+        "free_spam": 0,
+        "spam_limit": 0,
+        "frozen": 0,
+        "invalid": 0,
+        "error": 0
+    }
+
+    for f in files:
+        if "exports" in f.parts:
+            continue
+
+        client = TelegramClient(str(f.with_suffix("")), int(api_id), api_hash)
+        clean_phone = ""
+        country_code = "OTHER"
+        status_folder = "invalid"
+
+        try:
+            await client.connect()
+            me = await client.get_me()
+            
+            if me and me.phone:
+                clean_phone = str(me.phone).strip().replace("+", "")
+                for p in country_prefixes:
+                    if clean_phone.startswith(p):
+                        country_code = p
+                        break
+                
+                status_folder = await check_spambot_status(client)
+            else:
+                status_folder = "invalid"
+                clean_phone = f.stem
+
+        except UserDeactivatedBanError:
+            status_folder = "frozen"
+            clean_phone = f.stem
+        except FloodWaitError:
+            status_folder = "spam_limit"
+            clean_phone = f.stem
+        except Exception:
+            status_folder = "invalid"
+            clean_phone = f.stem
+        finally:
+            try:
+                await client.disconnect()
+            except Exception:
+                pass
+
+        if not clean_phone:
+            clean_phone = f.stem
+
+        target_dir = SESSION_DIR / country_code / status_folder
+        target_dir.mkdir(parents=True, exist_ok=True)
+        
+        new_path = target_dir / f"{clean_phone}.session"
+        try:
+            if f.resolve() != new_path.resolve():
+                if new_path.exists():
+                    new_path.unlink()
+                f.rename(new_path)
+            stats[status_folder] += 1
+        except Exception:
+            stats["error"] += 1
+
+    report = (
+        "✅ **Penyortiran & Pengecekan Status via @SpamBot Selesai!**\n\n"
+        f"• 🟢 **New Register**: {stats['new_register']}\n"
+        f"• 🟡 **Free Spam**: {stats['free_spam']}\n"
+        f"• 🔵 **Spam Limit**: {stats['spam_limit']}\n"
+        f"• 🔴 **Frozen**: {stats['frozen']}\n"
+        f"• ⚪ **Invalid**: {stats['invalid']}\n\n"
+        "File session telah dipindahkan ke subfolder masing-masing."
+    )
+    await callback.message.edit_text(report, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- USER SETTINGS
 @dp.callback_query(F.data == "menu_user_settings")
 async def cb_user_settings(callback: types.CallbackQuery):
     user_id = callback.from_user.id
@@ -329,7 +1170,7 @@ async def process_user_api_hash(message: types.Message, state: FSMContext):
     await message.answer("✅ **Berhasil!** API ID dan API Hash pribadi Anda telah disimpan.", parse_mode="Markdown", reply_markup=get_main_keyboard(message.from_user.id))
 
 
-# ---------------------------------------------------------------- FITUR KELOLA USER (KHUSUS ADMIN)
+# ---------------------------------------------------------------- KELOLA USER (ADMIN)
 @dp.callback_query(F.data == "menu_admin_users")
 async def cb_admin_users(callback: types.CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
@@ -421,7 +1262,7 @@ async def process_remove_user(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-# ---------------------------------------------------------------- MENU SETTINGS ADMIN (GLOBAL .ENV)
+# ---------------------------------------------------------------- MENU SETTINGS ADMIN
 @dp.callback_query(F.data == "menu_settings")
 async def cb_menu_settings(callback: types.CallbackQuery):
     token_status = "✅ Terisi" if os.getenv("TELEGRAM_BOT_TOKEN") else "❌ Belum diset"
@@ -514,385 +1355,6 @@ async def process_api_hash(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("✅ **Default TG API Hash berhasil disimpan!**", parse_mode="Markdown", reply_markup=get_main_keyboard(message.from_user.id))
 
-
-# ---------------------------------------------------------------- LIST SESSION
-@dp.callback_query(F.data == "menu_list")
-async def cb_list_sessions(callback: types.CallbackQuery):
-    files = list_sessions()
-    if not files:
-        await callback.message.edit_text("❌ Belum ada file session di direktori.", reply_markup=back_keyboard(callback.from_user.id))
-        return
-
-    text = f"📁 **Daftar Session ({len(files)} ditemukan):**\n\n"
-    for i, f in enumerate(files, 1):
-        rel_path = f.relative_to(SESSION_DIR).with_suffix("")
-        text += f"{i}. `{rel_path}`\n"
-
-    await callback.message.edit_text(text, reply_markup=back_keyboard(callback.from_user.id), parse_mode="Markdown")
-
-
-# ---------------------------------------------------------------- CEK SEMUA SESSION
-@dp.callback_query(F.data == "menu_check_all")
-async def cb_check_all(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    api_id, api_hash = get_user_api_credentials(user_id)
-
-    if not api_id or not api_hash:
-        await callback.message.edit_text("❌ TG_API_ID / TG_API_HASH belum diset. Silakan isi di menu Settings terlebih dahulu.", reply_markup=back_keyboard(user_id))
-        return
-
-    files = list_sessions()
-    if not files:
-        await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(user_id))
-        return
-
-    await callback.message.edit_text(f"⏳ Sedang memeriksa {len(files)} akun, mohon tunggu...")
-
-    report = "📊 **Ringkasan Kesehatan Akun:**\n\n"
-    active_count, banned_count, error_count = 0, 0, 0
-
-    for f in files:
-        rel_name = str(f.relative_to(SESSION_DIR).with_suffix(""))
-        path = session_path(rel_name)
-        client = TelegramClient(path, int(api_id), api_hash)
-        status = "AKTIF"
-        try:
-            await client.connect()
-            me = (await client(GetUsersRequest([InputUserSelf()])))[0]
-            if getattr(me, "restricted", False):
-                status = "TERBATAS"
-            active_count += 1
-        except UserDeactivatedBanError:
-            status = "BANNED"
-            banned_count += 1
-        except Exception:
-            status = "MATI/ERROR"
-            error_count += 1
-        finally:
-            await client.disconnect()
-
-        report += f"• `{rel_name}` : **{status}**\n"
-
-    report += f"\nTotal: {len(files)} | Aktif: {active_count} | Banned: {banned_count} | Error: {error_count}"
-    await callback.message.edit_text(report, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
-
-
-# ---------------------------------------------------------------- BACA OTP
-@dp.callback_query(F.data == "menu_otp")
-async def cb_menu_otp(callback: types.CallbackQuery):
-    files = list_sessions()
-    if not files:
-        await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(callback.from_user.id))
-        return
-
-    kb = []
-    for f in files:
-        rel_name = str(f.relative_to(SESSION_DIR).with_suffix(""))
-        kb.append([types.InlineKeyboardButton(text=f"📱 {rel_name}", callback_data=f"otp_sel_{rel_name}")])
-
-    kb.append([types.InlineKeyboardButton(text="« Kembali", callback_data="menu_back")])
-    await callback.message.edit_text("Pilih akun session yang ingin dicek OTP-nya:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb))
-
-
-@dp.callback_query(F.data.startswith("otp_sel_"))
-async def cb_otp_selected(callback: types.CallbackQuery, state: FSMContext):
-    session_name = callback.data.replace("otp_sel_", "")
-    await state.update_data(target_session=session_name)
-
-    kb = [
-        [types.InlineKeyboardButton(text="📜 Cek Riwayat Terakhir (15 pesan)", callback_data="otp_mode_history")],
-        [types.InlineKeyboardButton(text="« Kembali", callback_data="menu_otp")],
-    ]
-    await callback.message.edit_text(f"Session dipilih: `{session_name}`\nPilih mode baca OTP:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
-
-
-@dp.callback_query(F.data == "otp_mode_history")
-async def cb_otp_history(callback: types.CallbackQuery, state: FSMContext):
-    user_id = callback.from_user.id
-    api_id, api_hash = get_user_api_credentials(user_id)
-
-    if not api_id or not api_hash:
-        await callback.message.edit_text("❌ TG_API_ID / TG_API_HASH belum diset.", reply_markup=back_keyboard(user_id))
-        return
-
-    data = await state.get_data()
-    session_name = data.get("target_session")
-    path = session_path(session_name)
-
-    await callback.message.edit_text(f"⏳ Mengambil riwayat pesan untuk `{session_name}`...", parse_mode="Markdown")
-
-    client = TelegramClient(path, int(api_id), api_hash)
-    otp_pattern = r"\b\d{4,6}\b"
-    result_text = f"🔑 **Hasil OTP untuk `{session_name}`:**\n\n"
-
-    try:
-        await client.connect()
-        messages = await client.get_messages(None, limit=15)
-        found = False
-        for msg in messages:
-            if not msg.text:
-                continue
-            match = re.search(otp_pattern, msg.text)
-            if match:
-                found = True
-                code = match.group(0)
-                try:
-                    sender = await msg.get_sender()
-                    s_name = getattr(sender, "title", None) or getattr(sender, "first_name", "Unknown")
-                except Exception:
-                    s_name = "Unknown"
-
-                result_text += f"• **Waktu**: {msg.date.astimezone():%H:%M:%S}\n"
-                result_text += f"  **Pengirim**: {s_name}\n"
-                result_text += f"  **Kode OTP**: `{code}`\n"
-                result_text += f"  -------------------\n"
-
-        if not found:
-            result_text += "Tidak ditemukan kode OTP dalam 15 pesan terakhir."
-    except Exception as e:
-        result_text += f"❌ Error: {type(e).__name__}"
-    finally:
-        await client.disconnect()
-
-    await callback.message.edit_text(result_text, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
-
-
-# ---------------------------------------------------------------- SORTIR REGION & STATUS KESEHATAN
-@dp.callback_query(F.data == "menu_rename")
-async def cb_rename_sessions(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    api_id, api_hash = get_user_api_credentials(user_id)
-
-    if not api_id or not api_hash:
-        await callback.message.edit_text("❌ TG_API_ID / TG_API_HASH belum diset.", reply_markup=back_keyboard(user_id))
-        return
-
-    files = list(SESSION_DIR.rglob("*.session"))
-    if not files:
-        await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(user_id))
-        return
-
-    await callback.message.edit_text("⏳ Sedang memeriksa akun, menyortir kode negara, dan mengelompokkan berdasarkan status...")
-
-    country_prefixes = ["62", "1", "44", "60", "65", "81", "84", "91"]
-    stats = {"active": 0, "spam": 0, "frozen": 0, "invalid": 0, "error": 0}
-
-    for f in files:
-        client = TelegramClient(str(f.with_suffix("")), int(api_id), api_hash)
-        status_folder = "invalid"
-        clean_phone = ""
-        country_code = "OTHER"
-
-        try:
-            await client.connect()
-            me = await client.get_me()
-            
-            if me and me.phone:
-                clean_phone = str(me.phone).strip().replace("+", "")
-                for p in sorted(country_prefixes, key=len, reverse=True):
-                    if clean_phone.startswith(p):
-                        country_code = p
-                        break
-                
-                if getattr(me, "restricted", False):
-                    status_folder = "spam"
-                else:
-                    status_folder = "active"
-            else:
-                status_folder = "invalid"
-                clean_phone = f.stem
-            await client.disconnect()
-        except UserDeactivatedBanError:
-            status_folder = "frozen"
-            clean_phone = f.stem
-        except Exception:
-            status_folder = "invalid"
-            clean_phone = f.stem
-        finally:
-            try:
-                await client.disconnect()
-            except:
-                pass
-
-        if not clean_phone:
-            clean_phone = f.stem
-
-        target_dir = SESSION_DIR / country_code / status_folder
-        target_dir.mkdir(parents=True, exist_ok=True)
-        
-        new_path = target_dir / f"{clean_phone}.session"
-        try:
-            if f.resolve() != new_path.resolve():
-                if new_path.exists():
-                    new_path.unlink()
-                f.rename(new_path)
-            stats[status_folder] += 1
-        except Exception as e:
-            stats["error"] += 1
-
-    report = (
-        "✅ **Penyortiran & Pengecekan Status Selesai!**\n\n"
-        f"• 🟢 **Active**: {stats['active']}\n"
-        f"• 🟡 **Spam / Restricted**: {stats['spam']}\n"
-        f"• 🔴 **Frozen / Banned**: {stats['frozen']}\n"
-        f"• ❌ **Invalid / Error**: {stats['invalid']}\n\n"
-        "File session telah dipindahkan ke subfolder masing-masing."
-    )
-    await callback.message.edit_text(report, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
-
-
-# ---------------------------------------------------------------- EXPORT SESSIONS
-async def create_export_zip(export_type: str = "session") -> Path:
-    export_dir = SESSION_DIR / "exports"
-    export_dir.mkdir(parents=True, exist_ok=True)
-    
-    zip_path = export_dir / f"wfx_export_{export_type}.zip"
-    files = list(SESSION_DIR.rglob("*.session"))
-    
-    if not files:
-        return None
-
-    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for f in files:
-            if "exports" in f.parts:
-                continue
-            rel_path = f.relative_to(SESSION_DIR)
-            
-            if export_type == "session":
-                zipf.write(f, arcname=str(rel_path))
-            elif export_type == "json":
-                country_code = rel_path.parts[0] if len(rel_path.parts) > 1 else "Unknown"
-                status_cat = rel_path.parts[1] if len(rel_path.parts) > 2 else "Unknown"
-                meta_data = {
-                    "session_name": f.stem,
-                    "phone": f.stem,
-                    "country_code": country_code,
-                    "status": status_cat,
-                    "relative_path": str(rel_path)
-                }
-                json_bytes = json.dumps(meta_data, indent=4).encode("utf-8")
-                zipf.writestr(str(rel_path.with_suffix(".json")), json_bytes)
-            elif export_type == "tdata":
-                tdata_path = rel_path.parent / f"tdata_{f.stem}" / "tdata"
-                zipf.write(f, arcname=str(tdata_path / f"{f.stem}.session"))
-
-    return zip_path
-
-
-@dp.callback_query(F.data == "menu_export")
-async def cb_menu_export(callback: types.CallbackQuery):
-    kb = [
-        [types.InlineKeyboardButton(text="📦 Export Paket Session (.session)", callback_data="export_type_session")],
-        [types.InlineKeyboardButton(text="📄 Export Metadata (.json)", callback_data="export_type_json")],
-        [types.InlineKeyboardButton(text="📁 Export Format TData (Folder)", callback_data="export_type_tdata")],
-        [types.InlineKeyboardButton(text="« Kembali ke Menu Utama", callback_data="menu_back")]
-    ]
-    await callback.message.edit_text(
-        "📤 **Menu Export Session & Data**\n\nPilih format export yang Anda inginkan:",
-        reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb),
-        parse_mode="Markdown"
-    )
-
-
-@dp.callback_query(F.data.startswith("export_type_"))
-async def cb_process_export(callback: types.CallbackQuery):
-    export_type = callback.data.replace("export_type_", "")
-    await callback.message.edit_text(f"⏳ Sedang memproses file ke format **{export_type.upper()}**...")
-
-    zip_file = await create_export_zip(export_type)
-    user_id = callback.from_user.id
-    
-    if not zip_file or not zip_file.exists():
-        await callback.message.edit_text("❌ Tidak ada file session yang dapat diexport.", reply_markup=back_keyboard(user_id))
-        return
-
-    document = FSInputFile(str(zip_file), filename=zip_file.name)
-    await callback.message.answer_document(
-        document=document,
-        caption=f"✅ **Export Berhasil!**\nFormat: `{export_type.upper()}`",
-        parse_mode="Markdown"
-    )
-    await callback.message.edit_text("Kembali ke menu utama:", reply_markup=get_main_keyboard(user_id))
-
-# ---------------------------------------------------------------- COMMAND ADMIN & START
-
-@dp.message(Command("admin"))
-async def cmd_admin(message: types.Message, state: FSMContext):
-    user_id = message.from_user.id
-    
-    # Validasi apakah user yang mengetik adalah Admin utama
-    if user_id != ADMIN_ID:
-        await message.answer("⛔ **Akses Ditolak!** Perintah ini khusus untuk Admin.")
-        return
-
-    await state.clear()
-    
-    # Tampilan Dashboard khusus Admin
-    admin_dashboard_text = (
-        "👑 **WFX Admin Dashboard**\n\n"
-        "Selamat datang kembali, Admin! Di sini Anda memiliki akses penuh untuk mengelola sistem dan whitelist pengguna.\n\n"
-        "Silakan pilih menu di bawah ini:"
-    )
-    
-    kb = [
-        [types.InlineKeyboardButton(text="👥 Kelola Akses User (Whitelist)", callback_data="menu_admin_users")],
-        [types.InlineKeyboardButton(text="⚙️ Pengaturan Global (.env)", callback_data="menu_settings")],
-        [types.InlineKeyboardButton(text="📁 Daftar Session", callback_data="menu_list")],
-        [types.InlineKeyboardButton(text="« Menu Utama", callback_data="menu_back")]
-    ]
-    
-    await message.answer(
-        admin_dashboard_text,
-        reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb),
-        parse_mode="Markdown"
-    )
-
-
-@dp.message(Command("start"))
-async def cmd_start(message: types.Message, state: FSMContext):
-    await state.clear()
-    
-    # Tampilan Default Menu untuk user umum / member
-    default_menu_text = (
-        "👋 **WFX Session Control Panel**\n\n"
-        "Silakan pilih menu di bawah ini untuk mengelola akun Telegram Anda:"
-    )
-    
-    await message.answer(
-        default_menu_text,
-        reply_markup=get_main_keyboard(message.from_user.id),
-        parse_mode="Markdown",
-    )
-    
-    kb = [
-        [types.InlineKeyboardButton(text="👥 Kelola Akses User (Whitelist)", callback_data="menu_admin_users")],
-        [types.InlineKeyboardButton(text="⚙️ Pengaturan Global (.env)", callback_data="menu_settings")],
-        [types.InlineKeyboardButton(text="📁 Daftar Session", callback_data="menu_list")],
-        [types.InlineKeyboardButton(text="« Menu Utama", callback_data="menu_back")]
-    ]
-    
-    await message.answer(
-        admin_dashboard_text,
-        reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb),
-        parse_mode="Markdown"
-    )
-
-
-@dp.message(Command("start"))
-async def cmd_start(message: types.Message, state: FSMContext):
-    await state.clear()
-    
-    # Tampilan Default Menu untuk user umum / member
-    default_menu_text = (
-        "👋 **WFX Session Control Panel**\n\n"
-        "Silakan pilih menu di bawah ini untuk mengelola akun Telegram Anda:"
-    )
-    
-    await message.answer(
-        default_menu_text,
-        reply_markup=get_main_keyboard(message.from_user.id),
-        parse_mode="Markdown",
-    )
 
 # ---------------------------------------------------------------- MAIN APP
 async def main():
