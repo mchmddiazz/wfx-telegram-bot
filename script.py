@@ -268,6 +268,10 @@ COUNTRY_NAMES = {
 
 
 # ---------------------------------------------------------------- FSM STATES GROUP
+class ImportStates(StatesGroup):
+    waiting_for_files = State()
+
+
 class ExportStates(StatesGroup):
     waiting_for_custom_amount = State()
 
@@ -798,6 +802,8 @@ async def cb_back(callback: types.CallbackQuery, state: FSMContext):
 # ---------------------------------------------------------------- MENU UTAMA FILE MANAGER (DAFTAR SESSION)
 @dp.callback_query(F.data == "menu_list")
 async def cb_list_sessions(callback: types.CallbackQuery):
+    SESSION_DIR.mkdir(parents=True, exist_ok=True)
+    (SESSION_DIR / "exports").mkdir(exist_ok=True)
     files = list_sessions()
     if not files:
         await callback.message.edit_text("❌ Belum ada file session di direktori.", reply_markup=back_keyboard(callback.from_user.id))
@@ -828,12 +834,67 @@ async def cb_list_sessions(callback: types.CallbackQuery):
         c_name = COUNTRY_NAMES.get(c_code, f"🏳️ {c_code}")
         kb.append([types.InlineKeyboardButton(text=f"{c_name} - {count}", callback_data=f"select_country_{c_code}")])
 
+    kb.append([types.InlineKeyboardButton(text="📥 Import Session", callback_data="menu_import")])
+
     kb.append([
         types.InlineKeyboardButton(text="« Back", callback_data="menu_back"),
         types.InlineKeyboardButton(text="🏠 Home", callback_data="menu_back")
     ])
 
     await callback.message.edit_text(text, reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- IMPORT SESSION KE DIREKTORI
+@dp.callback_query(F.data == "menu_import")
+async def cb_import_start(callback: types.CallbackQuery, state: FSMContext):
+    await state.set_state(ImportStates.waiting_for_files)
+    kb = types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(text="✅ Selesai", callback_data="import_done")]])
+    await callback.message.edit_text(
+        "📥 **Import Session**\n\nKirim file `.session` atau `.zip` (berisi .session). "
+        "Bisa kirim beberapa file, lalu tekan Selesai.",
+        reply_markup=kb, parse_mode="Markdown",
+    )
+
+
+@dp.callback_query(F.data == "import_done")
+async def cb_import_done(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    await cb_list_sessions(callback)
+
+
+@dp.message(ImportStates.waiting_for_files, F.document)
+async def handle_import_file(message: types.Message, state: FSMContext):
+    doc = message.document
+    name = Path(doc.file_name or "").name
+    low = name.lower()
+    if not (low.endswith(".session") or low.endswith(".zip")):
+        await message.answer("❌ Hanya file .session atau .zip.")
+        return
+
+    SESSION_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = SESSION_DIR / f".import_{int(time.time() * 1000)}_{name}"
+    await bot.download(doc, destination=tmp)
+    saved = 0
+    try:
+        if low.endswith(".session"):
+            shutil.move(str(tmp), str(SESSION_DIR / name))
+            saved = 1
+        else:
+            with zipfile.ZipFile(tmp) as zf:
+                for info in zf.infolist():
+                    base = Path(info.filename).name
+                    if info.is_dir() or not base.lower().endswith(".session"):
+                        continue
+                    with zf.open(info) as src, open(SESSION_DIR / base, "wb") as dst:
+                        shutil.copyfileobj(src, dst)
+                    saved += 1
+    except zipfile.BadZipFile:
+        await message.answer("❌ File zip rusak.")
+        return
+    finally:
+        tmp.unlink(missing_ok=True)
+
+    await message.answer(f"✅ {saved} session diimpor dari `{name}`. Kirim lagi atau tekan Selesai.", parse_mode="Markdown")
 
 
 # ---------------------------------------------------------------- SUBMENU NEGARA
