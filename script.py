@@ -39,10 +39,13 @@ from telethon.tl.types import InputUserSelf
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 WHITELIST_PATH = Path(__file__).resolve().parent / "whitelist.json"
 # SESSION_DIR = Path("/home/flowyourcode/wfx-tele")
-SESSION_DIR = Path(__file__).resolve().parent / "file-manager"
 
 if ENV_PATH.exists():
     load_dotenv(ENV_PATH)
+
+SESSION_DIR = Path(
+    os.getenv("SESSION_DIR", str(Path(__file__).resolve().parent / "file-manager"))
+).expanduser()
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))

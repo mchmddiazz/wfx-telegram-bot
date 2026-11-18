@@ -114,6 +114,25 @@ TG_API_HASH=your_api_hash_here
 ADMIN_ID=your_telegram_user_id
 ```
 
+### 3. Deploy on Railway
+
+Set the start command to `python script.py` and add these variables in the
+Railway service's **Variables** settings:
+
+```env
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TG_API_ID=12345678
+TG_API_HASH=your_api_hash_here
+ADMIN_ID=your_telegram_user_id
+SESSION_DIR=/app/file-manager
+```
+
+In the service's **Settings → Volumes**, create a volume and set its mount path
+to `/app/file-manager`. This keeps Telethon session files across redeploys.
+The volume starts empty; copy any existing session files into it if they need
+to be retained. Railway volumes are configured in the Railway dashboard, not
+in this repository.
+
 ---
 
 ## 🔒 Security Note
