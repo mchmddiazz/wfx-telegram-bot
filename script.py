@@ -9,6 +9,7 @@ import re
 import json
 import zipfile
 import shutil
+import time
 from aiogram.types import FSInputFile
 from pathlib import Path
 from dotenv import load_dotenv, set_key
@@ -21,16 +22,24 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from telethon import TelegramClient
 from telethon.errors import (
-    FloodWaitError,
     UserDeactivatedBanError,
+    UserDeactivatedError,
+    AuthKeyUnregisteredError,
+    FreshResetAuthorisationForbiddenError,
+    FrozenMethodInvalidError,
+    FloodWaitError,
+    RPCError,
 )
+
+from telethon.tl.functions.auth import ResetAuthorizationsRequest
 from telethon.tl.functions.users import GetUsersRequest
 from telethon.tl.types import InputUserSelf
 
 # Path Konfigurasi
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 WHITELIST_PATH = Path(__file__).resolve().parent / "whitelist.json"
-SESSION_DIR = Path("/home/flowyourcode/wfx-tele")
+# SESSION_DIR = Path("/home/flowyourcode/wfx-tele")
+SESSION_DIR = Path(__file__).resolve().parent / "file-manager"
 
 if ENV_PATH.exists():
     load_dotenv(ENV_PATH)
@@ -254,6 +263,7 @@ COUNTRY_NAMES = {
     "OTHER": "🌐 Lainnya"
 }
 
+
 # ---------------------------------------------------------------- FSM STATES GROUP
 class ExportStates(StatesGroup):
     waiting_for_custom_amount = State()
@@ -277,6 +287,12 @@ class UserApiSettingsStates(StatesGroup):
 class AdminUserStates(StatesGroup):
     waiting_for_add_id = State()
     waiting_for_remove_id = State()
+
+
+class TestSendStates(StatesGroup):
+    waiting_for_session = State()
+    waiting_for_target = State()
+    waiting_for_message = State()
 
 
 # ---------------------------------------------------------------- GET API CREDENTIALS
@@ -410,12 +426,12 @@ def update_env_file(key: str, value: str):
 def get_main_keyboard(user_id: int):
     kb = [
         [
-            types.InlineKeyboardButton(text="📁 Daftar Session", callback_data="menu_list"),
+            types.InlineKeyboardButton(text="📁 File Manager", callback_data="menu_list"),
             types.InlineKeyboardButton(text="🔍 Cek Semua Session", callback_data="menu_check_all"),
         ],
         [
             types.InlineKeyboardButton(text="📂 Sortir Region & Status", callback_data="menu_rename"),
-            types.InlineKeyboardButton(text="🔑 Baca OTP", callback_data="menu_otp"),
+            types.InlineKeyboardButton(text="🚪 Logout All Sessions", callback_data="logout_all_sessions"),
         ],
         [
             types.InlineKeyboardButton(text="⚙️ Settings", callback_data="menu_settings"),
@@ -423,36 +439,29 @@ def get_main_keyboard(user_id: int):
         [
             types.InlineKeyboardButton(text="⚠️ Under Development", callback_data="under_development"),
         ],
-        # Baris 1: Check Live & Daftar Session
         [
-            types.InlineKeyboardButton(text="✅ Check Live", callback_data="menu_check_live"),
-            types.InlineKeyboardButton(text="📁 File Manager", callback_data="menu_file_manager"),
+            types.InlineKeyboardButton(text="📤 Tes Kirim Pesan", callback_data="menu_test_send"),
+            types.InlineKeyboardButton(text="🔑 Baca OTP", callback_data="menu_otp"),
         ],
-        # Baris 2: Check ID & Change Mail
         [
-            types.InlineKeyboardButton(text="🆔 Check ID", callback_data="menu_check_id"),
-            types.InlineKeyboardButton(text="📧 Change Mail", callback_data="menu_change_mail"),
+            types.InlineKeyboardButton(text="🆔 Check ID", callback_data="development_check_id"),
+            types.InlineKeyboardButton(text="📧 Change Mail", callback_data="development_change_mail"),
         ],
-        # Baris 3: Check Health & Check Spam
         [
-            types.InlineKeyboardButton(text="💚 Check Health", callback_data="menu_check_health"),
-            types.InlineKeyboardButton(text="🚫 Check Spam", callback_data="menu_check_spam"),
+            types.InlineKeyboardButton(text="💚 Check Health", callback_data="development_check_health"),
+            types.InlineKeyboardButton(text="🚫 Check Spam", callback_data="development_check_spam"),
         ],
-        # Baris 4: Remove 2FA & Change 2FA
         [
-            types.InlineKeyboardButton(text="🔓 Remove 2FA", callback_data="menu_remove_2fa"),
-            types.InlineKeyboardButton(text="🔄 Change 2FA", callback_data="menu_change_2fa"),
+            types.InlineKeyboardButton(text="🔓 Remove 2FA", callback_data="development_remove_2fa"),
+            types.InlineKeyboardButton(text="🔄 Change 2FA", callback_data="development_change_2fa"),
         ],
-        # Baris 5: Enable 2FA
         [
-            types.InlineKeyboardButton(text="🔐 Enable 2FA", callback_data="menu_enable_2fa"),
+            types.InlineKeyboardButton(text="🔐 Enable 2FA", callback_data="development_enable_2fa"),
         ],
-        # Baris 6: Clean Profile & Clean Message
         [
-            types.InlineKeyboardButton(text="🧹 Clean Profile", callback_data="menu_clean_profile"),
-            types.InlineKeyboardButton(text="💬 Clean Message", callback_data="menu_clean_message"),
+            types.InlineKeyboardButton(text="🧹 Clean Profile", callback_data="development_clean_profile"),
+            types.InlineKeyboardButton(text="💬 Clean Message", callback_data="development_clean_message"),
         ],
-        # Baris 7: Fitur Utama Anda (Sortir Region & Settings API)
     ]
     
     if user_id == ADMIN_ID:
@@ -460,18 +469,241 @@ def get_main_keyboard(user_id: int):
 
     return types.InlineKeyboardMarkup(inline_keyboard=kb)
 
-# ---------------------------------------------------------------- PLACEHOLDER HANDLER MENU BARU
-@dp.callback_query(F.data.startswith("menu_"))
-async def cb_feature_placeholders(callback: types.CallbackQuery):
-    # Biarkan menu yang sudah ada tetap berjalan tanpa tertimpa
-    handled_callbacks = [
-        "menu_list", "menu_check_all", "menu_otp", "menu_rename", 
-        "menu_settings", "menu_back", "menu_user_settings", "menu_admin_users"
-    ]
-    if callback.data in handled_callbacks:
+
+# ---------------------------------------------------------------- MENU TES KIRIM PESAN
+@dp.callback_query(F.data == "menu_test_send")
+async def cb_menu_test_send(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    files = [f for f in list_sessions() if "exports" not in f.parts]
+    if not files:
+        await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(callback.from_user.id))
         return
 
-    menu_title = callback.data.replace("menu_", "").replace("_", " ").title()
+    kb = []
+    for f in files:
+        rel_name = str(f.relative_to(SESSION_DIR).with_suffix(""))
+        kb.append([types.InlineKeyboardButton(text=f"📱 {rel_name}", callback_data=f"tsend_sel_{rel_name}")])
+
+    kb.append([types.InlineKeyboardButton(text="« Kembali", callback_data="menu_back")])
+    await callback.message.edit_text("📤 **Tes Kirim Pesan**\n\nPilih session yang ingin digunakan untuk mengirim pesan:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
+
+
+@dp.callback_query(F.data.startswith("tsend_sel_"))
+async def cb_test_send_session_selected(callback: types.CallbackQuery, state: FSMContext):
+    session_name = callback.data.replace("tsend_sel_", "")
+    await state.set_state(TestSendStates.waiting_for_target)
+    await state.update_data(target_session=session_name)
+
+    await callback.message.edit_text(
+        f"📱 Session terpilih: `{session_name}`\n\n"
+        "Silakan masukkan **Username / User ID / Phone Number** tujuan:\n"
+        "*(Contoh: `@username` atau `123456789`)*\n\n"
+        "*(Ketik /cancel untuk membatalkan)*",
+        parse_mode="Markdown"
+    )
+
+
+@dp.message(TestSendStates.waiting_for_target)
+async def process_test_send_target(message: types.Message, state: FSMContext):
+    if message.text == "/cancel":
+        await state.clear()
+        await message.answer("Dibatalkan.", reply_markup=get_main_keyboard(message.from_user.id))
+        return
+
+    target = message.text.strip()
+    await state.update_data(target_peer=target)
+    await state.set_state(TestSendStates.waiting_for_message)
+
+    await message.answer(
+        f"🎯 Tujuan: `{target}`\n\n"
+        "Silakan masukkan **teks pesan** yang ingin dikirim:\n\n"
+        "*(Ketik /cancel untuk membatalkan)*",
+        parse_mode="Markdown"
+    )
+
+
+@dp.message(TestSendStates.waiting_for_message)
+async def process_test_send_message(message: types.Message, state: FSMContext):
+    if message.text == "/cancel":
+        await state.clear()
+        await message.answer("Dibatalkan.", reply_markup=get_main_keyboard(message.from_user.id))
+        return
+
+    msg_text = message.text.strip()
+    data = await state.get_data()
+    await state.clear()
+
+    session_name = data.get("target_session")
+    target_peer = data.get("target_peer")
+    user_id = message.from_user.id
+
+    api_id, api_hash = get_user_api_credentials(user_id)
+    if not api_id or not api_hash:
+        await message.answer("❌ API ID / API Hash belum diset di menu Settings.", reply_markup=back_keyboard(user_id))
+        return
+
+    path = session_path(session_name)
+    await message.answer(f"⏳ Mengirim pesan dari `{session_name}` ke `{target_peer}`...", parse_mode="Markdown")
+
+    client = TelegramClient(path, int(api_id), api_hash)
+    
+    start_time = time.time()
+    try:
+        await client.connect()
+        
+        spambot_status = await check_spambot_status(client)
+        if spambot_status == "frozen":
+            raise RPCError(code=420, message="FROZEN_METHOD_INVALID")
+
+        if not await client.is_user_authorized():
+            response_text = (
+                f"❌ **Gagal Kirim Pesan**\n\n"
+                f"• **Session**: `{session_name}`\n"
+                f"• **Status**: Session Unauthorized / Expired"
+            )
+        else:
+            sent_msg = await client.send_message(target_peer, msg_text)
+            latency = round((time.time() - start_time) * 1000, 2)
+
+            response_text = (
+                "✅ **Pesan Berhasil Terkirim!**\n\n"
+                f"• **Session Pengirim**: `{session_name}`\n"
+                f"• **Tujuan**: `{target_peer}`\n"
+                f"• **ID Pesan**: `{sent_msg.id}`\n"
+                f"• **Waktu Server**: `{sent_msg.date.astimezone():%Y-%m-%d %H:%M:%S}`\n"
+                f"• **Response Time**: `{latency} ms`\n"
+                f"• **Isi Pesan**: _{sent_msg.text}_"
+            )
+
+    except UserDeactivatedBanError:
+        rpc_err = RPCError(code=402, message="FROZEN_METHOD_INVALID")
+        response_text = (
+            f"🔴 **Gagal Kirim Pesan (Telegram RPC Error)**\n\n"
+            f"• **Session**: `{session_name}`\n"
+            f"• **Error Code**: `{rpc_err.code}`\n"
+            f"• **Error Type**: `{type(rpc_err).__name__}`\n"
+            f"• **Message**: `{rpc_err.message}`"
+        )
+    except FloodWaitError as e:
+        response_text = f"⏳ **Gagal Kirim Pesan**\n\n• **Session**: `{session_name}`\n• **Status**: FloodWait / Limit ({e.seconds} detik)"
+    except RPCError as e:
+        err_code = getattr(e, 'code', 402)
+        response_text = (
+            f"❌ **Gagal Kirim Pesan (Telegram RPC Error)**\n\n"
+            f"• **Session**: `{session_name}`\n"
+            f"• **Error Code**: `{err_code}`\n"
+            f"• **Error Type**: `{type(e).__name__}`\n"
+            f"• **Message**: `{e}`"
+        )
+    except Exception as e:
+        response_text = f"⚠️ **Gagal Kirim Pesan (System Error)**\n\n• **Session**: `{session_name}`\n• **Error Type**: `{type(e).__name__}`\n• **Detail**: {type(e).__name__}: {str(e)}"
+    finally:
+        try:
+            await client.disconnect()
+        except Exception:
+            pass
+
+    await message.answer(response_text, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- LOGOUT ALL SESSIONS
+@dp.callback_query(F.data == "logout_all_sessions")
+async def cb_logout_all_sessions(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    api_id, api_hash = get_user_api_credentials(user_id)
+
+    if not api_id or not api_hash:
+        await callback.message.edit_text(
+            "❌ **TG_API_ID / TG_API_HASH belum diset.**\nSilakan isi di menu Settings terlebih dahulu.",
+            reply_markup=back_keyboard(user_id),
+            parse_mode="Markdown"
+        )
+        return
+
+    files = [f for f in list_sessions() if "exports" not in f.parts]
+    if not files:
+        await callback.message.edit_text("❌ Belum ada file session di direktori.", reply_markup=back_keyboard(user_id))
+        return
+
+    await callback.message.edit_text(f"⏳ **Memproses Logout All Sessions ({len(files)} Session)...**\nMohon tunggu sejenak.", parse_mode="Markdown")
+
+    report = "📊 **Hasil Logout All Sessions (Terminate Other Devices):**\n\n"
+
+    for f in files:
+        rel_name = str(f.relative_to(SESSION_DIR).with_suffix(""))
+        path = session_path(rel_name)
+        client = TelegramClient(path, int(api_id), api_hash)
+        
+        try:
+            await client.connect()
+            
+            if not await client.is_user_authorized():
+                report += f"• `{rel_name}` : ⚪ **UNAUTHORIZED / SESSION EXPIRED**\n\n"
+                continue
+
+            spambot_status = await check_spambot_status(client)
+            if spambot_status == "frozen":
+                raise RPCError(code=402, message="FROZEN_METHOD_INVALID")
+
+            logout_status = "✅ Perangkat Lain Berhasil Di-logout"
+            try:
+                await client(ResetAuthorizationsRequest())
+            except RPCError as e:
+                if "FRESH_RESET_AUTHORISATION_FORBIDDEN" in str(e) or e.code == 406:
+                    logout_status = "⚠️ Logout Ditunda (Session Baru/Perlu Jeda 24 Jam)"
+                else:
+                    logout_status = f"⚠️ {e}"
+            except Exception as e:
+                logout_status = f"⚠️ Error Terminate: {type(e).__name__}"
+
+            me = await client.get_me()
+            first_name = getattr(me, 'first_name', '') or ''
+            last_name = getattr(me, 'last_name', '') or ''
+            full_name = f"{first_name} {last_name}".strip() or "No Name"
+            username = f"@{me.username}" if getattr(me, 'username', None) else "Tanpa Username"
+            phone = getattr(me, 'phone', 'N/A')
+            user_id_num = getattr(me, 'id', 'N/A')
+
+            report += (
+                f"• `{rel_name}`\n"
+                f"  ├ **ID**: `{user_id_num}`\n"
+                f"  ├ **Nama**: {full_name}\n"
+                f"  ├ **Username**: {username}\n"
+                f"  ├ **Phone**: +{phone}\n"
+                f"  └ **Status Logout**: {logout_status}\n\n"
+            )
+
+        except UserDeactivatedBanError:
+            rpc_err = RPCError(code=402, message="FROZEN_METHOD_INVALID")
+            report += (
+                f"• `{rel_name}` : 🔴 **FROZEN / BANNED**\n"
+                f"  ├ `Error Code`: `{rpc_err.code}`\n"
+                f"  ├ `Error Type`: `{type(rpc_err).__name__}`\n"
+                f"  └ `Message`: `{rpc_err.message}`\n\n"
+            )
+        except RPCError as e:
+            err_code = getattr(e, 'code', 402)
+            report += (
+                f"• `{rel_name}` : 🔴 **FROZEN / RPC ERROR {err_code}**\n"
+                f"  ├ `Error Code`: `{err_code}`\n"
+                f"  ├ `Error Type`: `{type(e).__name__}`\n"
+                f"  └ `Message`: `{e}`\n\n"
+            )
+        except Exception as e:
+            report += f"• `{rel_name}` : ⚠️ **SYSTEM ERROR**: `{type(e).__name__}` - {e}\n\n"
+        finally:
+            try:
+                await client.disconnect()
+            except Exception:
+                pass
+
+    await callback.message.edit_text(report, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- PLACEHOLDER HANDLER MENU BARU
+@dp.callback_query(F.data.startswith("development_"))
+async def cb_feature_placeholders(callback: types.CallbackQuery):
+    menu_title = callback.data.replace("development_", "").replace("_", " ").title()
     await callback.answer(f"⚠️ Fitur {menu_title} dalam tahap pengembangan.", show_alert=True)
 
 
@@ -636,6 +868,7 @@ async def cb_select_country(callback: types.CallbackQuery):
                 stats["invalid"] += 1
 
     c_name = COUNTRY_NAMES.get(country_code, country_code)
+    total_country_sessions = sum(stats.values())
     
     text = f"📂 **File Manager**\n\n"
     text += f"{c_name}\n\n"
@@ -651,12 +884,49 @@ async def cb_select_country(callback: types.CallbackQuery):
         [types.InlineKeyboardButton(text=f"🔵 Spam Limit - {stats['spam_limit']}", callback_data=f"show_sess_{country_code}_spam_limit")],
         [types.InlineKeyboardButton(text=f"🔴 Frozen - {stats['frozen']}", callback_data=f"show_sess_{country_code}_frozen")],
         [types.InlineKeyboardButton(text=f"⚪ Invalid - {stats['invalid']}", callback_data=f"show_sess_{country_code}_invalid")],
+        [types.InlineKeyboardButton(text=f"📦 Export All ({total_country_sessions})", callback_data=f"export_all_{country_code}")],
         [
             types.InlineKeyboardButton(text="« Back", callback_data="menu_list"),
             types.InlineKeyboardButton(text="🏠 Home", callback_data="menu_back")
         ]
     ]
 
+    await callback.message.edit_text(text, reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
+
+
+# ---------------------------------------------------------------- EXPORT ALL PER NEGARA
+@dp.callback_query(F.data.startswith("export_all_"))
+async def cb_export_all_country(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    c_code = callback.data.replace("export_all_", "")
+
+    files = [
+        f for f in list_sessions()
+        if "exports" not in f.parts
+        and (
+            (len(f.relative_to(SESSION_DIR).parts) >= 2 and f.relative_to(SESSION_DIR).parts[0] == c_code)
+            or (len(f.relative_to(SESSION_DIR).parts) < 2 and c_code == "OTHER")
+        )
+    ]
+
+    if not files:
+        await callback.answer("Tidak ada session dalam negara ini.", show_alert=True)
+        return
+
+    c_name = COUNTRY_NAMES.get(c_code, c_code)
+
+    text = (
+        f"📱 **Export Semua Session ({c_name}):**\n\n"
+        f"📦 **Total Terdeteksi:** `{len(files)}` file session (semua kategori)\n\n"
+        f"Silakan pilih format export di bawah ini:"
+    )
+
+    kb = [
+        [types.InlineKeyboardButton(text="📦 Export Session (.session)", callback_data=f"expfmt_session_{c_code}_all")],
+        [types.InlineKeyboardButton(text="📁 Export TData (Folder)", callback_data=f"expfmt_tdata_{c_code}_all")],
+        [types.InlineKeyboardButton(text="📄 Export JSON (.json)", callback_data=f"expfmt_json_{c_code}_all")],
+        [types.InlineKeyboardButton(text="« Kembali", callback_data=f"select_country_{c_code}")]
+    ]
     await callback.message.edit_text(text, reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb), parse_mode="Markdown")
 
 
@@ -710,11 +980,13 @@ async def cb_choose_export_amount(callback: types.CallbackQuery):
     exp_fmt = parts[1]
     c_code = parts[2]
     status = parts[3]
+
+    back_cb = f"export_all_{c_code}" if status == "all" else f"show_sess_{c_code}_{status}"
     
     kb = [
         [types.InlineKeyboardButton(text="📦 Export Semua File", callback_data=f"doexp_{exp_fmt}_{c_code}_{status}")],
         [types.InlineKeyboardButton(text="✏️ Input Jumlah (Custom)", callback_data=f"askcount_{exp_fmt}_{c_code}_{status}")],
-        [types.InlineKeyboardButton(text="« Kembali", callback_data=f"show_sess_{c_code}_{status}")]
+        [types.InlineKeyboardButton(text="« Kembali", callback_data=back_cb)]
     ]
     
     await callback.message.edit_text(
@@ -798,17 +1070,26 @@ async def generate_category_export(c_code: str, status: str, exp_type: str, coun
     export_dir = SESSION_DIR / "exports"
     export_dir.mkdir(parents=True, exist_ok=True)
     
-    target_dir = SESSION_DIR / c_code / status
-    
-    if target_dir.exists():
-        files = sorted(list(target_dir.glob("*.session")))
-    else:
+    if status == "all":
         files = [
-            f for f in list_sessions() 
-            if len(f.relative_to(SESSION_DIR).parts) >= 3
-            and f.relative_to(SESSION_DIR).parts[0] == c_code 
-            and f.relative_to(SESSION_DIR).parts[1] == status
+            f for f in list_sessions()
+            if "exports" not in f.parts
+            and (
+                (len(f.relative_to(SESSION_DIR).parts) >= 2 and f.relative_to(SESSION_DIR).parts[0] == c_code)
+                or (len(f.relative_to(SESSION_DIR).parts) < 2 and c_code == "OTHER")
+            )
         ]
+    else:
+        target_dir = SESSION_DIR / c_code / status
+        if target_dir.exists():
+            files = sorted(list(target_dir.glob("*.session")))
+        else:
+            files = [
+                f for f in list_sessions() 
+                if len(f.relative_to(SESSION_DIR).parts) >= 3
+                and f.relative_to(SESSION_DIR).parts[0] == c_code 
+                and f.relative_to(SESSION_DIR).parts[1] == status
+            ]
 
     if not files:
         return None
@@ -817,24 +1098,72 @@ async def generate_category_export(c_code: str, status: str, exp_type: str, coun
         files = files[:count]
 
     zip_path = export_dir / f"export_{c_code}_{status}_{exp_type}.zip"
+    current_timestamp = int(time.time())
 
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for f in files:
-            rel_path = f.name
+            rel_parts = f.relative_to(SESSION_DIR).parts
+            item_category = rel_parts[1] if len(rel_parts) >= 3 else (status if status != "all" else "new_register")
             
+            # Jika status == "all", simpan dalam subfolder status di dalam ZIP agar tidak bentrok
+            arc_prefix = f"{item_category}/" if status == "all" else ""
+
             if exp_type == "session":
-                zipf.write(f, arcname=rel_path)
+                zipf.write(f, arcname=f"{arc_prefix}{f.name}")
+
             elif exp_type == "json":
                 meta_data = {
-                    "session_name": f.stem,
+                    "session_file": f.name,
                     "phone": f.stem,
-                    "country_code": c_code,
-                    "status": status,
+                    "app_id": 2040,
+                    "app_hash": "b18441a1ff607e10a989891a5462e627",
+                    "sdk": "Windows 11 x64",
+                    "app_version": "5.12.3 x64",
+                    "device": "216C",
+                    "device_model": "MS-7549",
+                    "lang_pack": "tdesktop",
+                    "system_lang_pack": "en-US",
+                    "user_id": 1000000000,
+                    "username": "TG",
+                    "ipv6": False,
+                    "first_name": "Telegram",
+                    "last_name": "",
+                    "register_time": current_timestamp,
+                    "sex": None,
+                    "last_check_time": current_timestamp,
+                    "device_token": "FIREBASE_FAILED",
+                    "lang_code": "en",
+                    "tz_offset": 28800,
+                    "perf_cat": 2,
+                    "avatar": "img/default.png",
+                    "proxy": None,
+                    "twoFA": None,
+                    "2FA": None,
+                    "password": None,
+                    "block": False,
+                    "package_id": "",
+                    "installer": "",
+                    "system_lang_code": "en-US",
+                    "email": "",
+                    "email_id": "",
+                    "secret": "",
+                    "category": item_category
                 }
+                
+                existing_json_path = f.with_suffix(".json")
+                if existing_json_path.exists():
+                    try:
+                        with open(existing_json_path, "r", encoding="utf-8") as jf:
+                            existing_data = json.load(jf)
+                            meta_data.update(existing_data)
+                    except Exception:
+                        pass
+
                 json_bytes = json.dumps(meta_data, indent=4).encode("utf-8")
-                zipf.writestr(f"{f.stem}.json", json_bytes)
+                zipf.writestr(f"{arc_prefix}{f.stem}.json", json_bytes)
+
             elif exp_type == "tdata":
-                tdata_inner = f"tdata_{f.stem}/tdata/{f.stem}.session"
+                tdata_inner = f"{arc_prefix}tdata_{f.stem}/tdata/{f.stem}.session"
                 zipf.write(f, arcname=tdata_inner)
 
     return zip_path
@@ -847,12 +1176,18 @@ async def cb_check_all(callback: types.CallbackQuery):
     api_id, api_hash = get_user_api_credentials(user_id)
 
     if not api_id or not api_hash:
-        await callback.message.edit_text("❌ TG_API_ID / TG_API_HASH belum diset. Silakan isi di menu Settings terlebih dahulu.", reply_markup=back_keyboard(user_id))
+        await callback.message.edit_text(
+            "❌ TG_API_ID / TG_API_HASH belum diset. Silakan isi di menu Settings terlebih dahulu.",
+            reply_markup=back_keyboard(user_id)
+        )
         return
 
     files = [f for f in list_sessions() if "exports" not in f.parts]
     if not files:
-        await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(user_id))
+        await callback.message.edit_text(
+            "❌ Belum ada file session.",
+            reply_markup=back_keyboard(user_id)
+        )
         return
 
     await callback.message.edit_text(f"⏳ Sedang memeriksa {len(files)} akun via @SpamBot, mohon tunggu...")
@@ -874,10 +1209,25 @@ async def cb_check_all(callback: types.CallbackQuery):
         status_category = "invalid"
         try:
             await client.connect()
-            status_category = await check_spambot_status(client)
-        except UserDeactivatedBanError:
+            
+            if not await client.is_user_authorized():
+                status_category = "invalid"
+            else:
+                try:
+                    await client(ResetAuthorizationsRequest())
+                except FreshResetAuthorisationForbiddenError:
+                    pass
+                
+                status_category = await check_spambot_status(client)
+                
+        except (UserDeactivatedBanError, UserDeactivatedError, FrozenMethodInvalidError):
             status_category = "frozen"
-        except Exception:
+        except RPCError as e:
+            if "frozen" in str(e).lower():
+                status_category = "frozen"
+            else:
+                status_category = "invalid"
+        except (AuthKeyUnregisteredError, Exception):
             status_category = "invalid"
         finally:
             try:
@@ -898,12 +1248,12 @@ async def cb_check_all(callback: types.CallbackQuery):
         report += f"• `{rel_name}` : **{status_display}**\n"
 
     report += (
-        f"\nTotal: {len(files)} | "
-        f"🟢 New Reg: {stats_count['new_register']} | "
-        f"🟡 Free Spam: {stats_count['free_spam']} | "
-        f"🔵 Limit: {stats_count['spam_limit']} | "
-        f"🔴 Frozen: {stats_count['frozen']} | "
-        f"⚪ Invalid: {stats_count['invalid']}"
+        f"\nTotal: {len(files)} \n"
+        f"├ 🟢 New Reg: {stats_count['new_register']} \n"
+        f"├ 🟡 Free Spam: {stats_count['free_spam']} \n"
+        f"├ 🔵 Limit: {stats_count['spam_limit']} \n"
+        f"├ 🔴 Frozen: {stats_count['frozen']} \n"
+        f"└ ⚪ Invalid: {stats_count['invalid']}"
     )
     await callback.message.edit_text(report, reply_markup=back_keyboard(user_id), parse_mode="Markdown")
 
@@ -979,7 +1329,7 @@ async def cb_otp_history(callback: types.CallbackQuery, state: FSMContext):
                 result_text += f"  -------------------\n"
 
         if not found:
-            result_text += "Tidak ditemukan kode OTP dalam 15 pesan terakhir."
+            result_text += f"Tidak ditemukan kode OTP dalam 15 pesan terakhir."
     except Exception as e:
         result_text += f"❌ Error: {type(e).__name__}"
     finally:
@@ -999,6 +1349,7 @@ async def cb_rename_sessions(callback: types.CallbackQuery):
         return
 
     files = list(SESSION_DIR.rglob("*.session"))
+    files = [f for f in files if "exports" not in f.parts]
     if not files:
         await callback.message.edit_text("❌ Belum ada file session.", reply_markup=back_keyboard(user_id))
         return
@@ -1016,39 +1367,49 @@ async def cb_rename_sessions(callback: types.CallbackQuery):
     }
 
     for f in files:
-        if "exports" in f.parts:
-            continue
+        raw_stem = f.stem.strip().replace("+", "")
+        clean_phone = raw_stem
+        country_code = "OTHER"
+
+        for p in country_prefixes:
+            if raw_stem.startswith(p):
+                country_code = p
+                break
 
         client = TelegramClient(str(f.with_suffix("")), int(api_id), api_hash)
-        clean_phone = ""
-        country_code = "OTHER"
         status_folder = "invalid"
 
         try:
             await client.connect()
-            me = await client.get_me()
             
-            if me and me.phone:
-                clean_phone = str(me.phone).strip().replace("+", "")
-                for p in country_prefixes:
-                    if clean_phone.startswith(p):
-                        country_code = p
-                        break
-                
+            if not await client.is_user_authorized():
+                status_folder = "invalid"
+            else:
+                me = await client.get_me()
+                if me and me.phone:
+                    clean_phone = str(me.phone).strip().replace("+", "")
+                    country_code = "OTHER"
+                    for p in country_prefixes:
+                        if clean_phone.startswith(p):
+                            country_code = p
+                            break
+
+                try:
+                    await client(ResetAuthorizationsRequest())
+                except FreshResetAuthorisationForbiddenError:
+                    pass
+
                 status_folder = await check_spambot_status(client)
+
+        except (UserDeactivatedBanError, UserDeactivatedError, FrozenMethodInvalidError):
+            status_folder = "frozen"
+        except RPCError as e:
+            if "frozen" in str(e).lower():
+                status_folder = "frozen"
             else:
                 status_folder = "invalid"
-                clean_phone = f.stem
-
-        except UserDeactivatedBanError:
-            status_folder = "frozen"
-            clean_phone = f.stem
-        except FloodWaitError:
-            status_folder = "spam_limit"
-            clean_phone = f.stem
-        except Exception:
+        except (AuthKeyUnregisteredError, Exception):
             status_folder = "invalid"
-            clean_phone = f.stem
         finally:
             try:
                 await client.disconnect()
