@@ -798,6 +798,8 @@ async def cb_back(callback: types.CallbackQuery, state: FSMContext):
 # ---------------------------------------------------------------- MENU UTAMA FILE MANAGER (DAFTAR SESSION)
 @dp.callback_query(F.data == "menu_list")
 async def cb_list_sessions(callback: types.CallbackQuery):
+    SESSION_DIR.mkdir(parents=True, exist_ok=True)
+    (SESSION_DIR / "exports").mkdir(exist_ok=True)
     files = list_sessions()
     if not files:
         await callback.message.edit_text("❌ Belum ada file session di direktori.", reply_markup=back_keyboard(callback.from_user.id))
